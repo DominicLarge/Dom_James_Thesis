@@ -1,0 +1,1092 @@
+{
+  "last_node_id": 74,
+  "last_link_id": 128,
+  "nodes": [
+    {
+      "id": 62,
+      "type": "CLIPTextEncode",
+      "pos": [
+        220,
+        -200
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 108
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 95,
+          "widget": {
+            "name": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            98
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 60,
+      "type": "CheckpointLoaderSimple",
+      "pos": [
+        -210,
+        30
+      ],
+      "size": {
+        "0": 315,
+        "1": 98
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            99
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            107,
+            108
+          ],
+          "shape": 3,
+          "slot_index": 1
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            102,
+            104
+          ],
+          "shape": 3,
+          "slot_index": 2
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CheckpointLoaderSimple"
+      },
+      "widgets_values": [
+        "realisticVisionV60B1_v51HyperVAE.safetensors"
+      ]
+    },
+    {
+      "id": 61,
+      "type": "CLIPTextEncode",
+      "pos": [
+        220,
+        -540
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 107
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 96,
+          "widget": {
+            "name": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            97
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 65,
+      "type": "VAEDecode",
+      "pos": [
+        1710,
+        -120
+      ],
+      "size": {
+        "0": 210,
+        "1": 46
+      },
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 101
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 102
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            123
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      }
+    },
+    {
+      "id": 63,
+      "type": "KSamplerAdvanced",
+      "pos": [
+        1250,
+        -580
+      ],
+      "size": {
+        "0": 315,
+        "1": 334
+      },
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 99
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 97
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 98
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 128
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            101
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerAdvanced"
+      },
+      "widgets_values": [
+        "enable",
+        209730700428796,
+        "randomize",
+        20,
+        8,
+        "dpmpp_2m_sde",
+        "karras",
+        0,
+        10000,
+        "disable"
+      ]
+    },
+    {
+      "id": 74,
+      "type": "EmptyLatentImage",
+      "pos": [
+        630,
+        310
+      ],
+      "size": {
+        "0": 315,
+        "1": 106
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            128
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyLatentImage"
+      },
+      "widgets_values": [
+        512,
+        512,
+        1
+      ]
+    },
+    {
+      "id": 66,
+      "type": "VAEEncode",
+      "pos": [
+        410,
+        190
+      ],
+      "size": {
+        "0": 210,
+        "1": 46
+      },
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 104
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEEncode"
+      }
+    },
+    {
+      "id": 50,
+      "type": "TripoSRViewer",
+      "pos": [
+        3915.9058290780486,
+        -915.7522223262322
+      ],
+      "size": [
+        600,
+        500
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mesh",
+          "type": "MESH",
+          "link": 78
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TripoSRViewer"
+      },
+      "widgets_values": [
+        null
+      ]
+    },
+    {
+      "id": 49,
+      "type": "TripoSRSampler",
+      "pos": [
+        3141.905829078051,
+        -1102.7522223262322
+      ],
+      "size": {
+        "0": 315,
+        "1": 122
+      },
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "TRIPOSR_MODEL",
+          "link": 79
+        },
+        {
+          "name": "reference_image",
+          "type": "IMAGE",
+          "link": 121
+        },
+        {
+          "name": "reference_mask",
+          "type": "MASK",
+          "link": 92,
+          "slot_index": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MESH",
+          "type": "MESH",
+          "links": [
+            78
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TripoSRSampler"
+      },
+      "widgets_values": [
+        256,
+        10
+      ]
+    },
+    {
+      "id": 55,
+      "type": "PreviewImage",
+      "pos": [
+        4255.905829078051,
+        -360.75222232623224
+      ],
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 83
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 46,
+      "type": "IF_DisplayText",
+      "pos": [
+        -574,
+        -1212
+      ],
+      "size": [
+        900.1273475369121,
+        475.4936357237207
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 77,
+          "widget": {
+            "name": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "IF_DisplayText"
+      },
+      "widgets_values": [
+        "",
+        "The image you've provided is a collage of three different architectural spaces, each with its own unique design elements. However, there isn't an actual chair visible in the image. If you're asking for a description of a chair designed in the style of Carlo Scarpa, I can provide that information:\n\nCarlo Scarpa was known for his use of natural materials and his ability to create spaces that were both functional and aesthetically pleasing. A chair designed by him might incorporate elements such as:\n\n1. **Materials**: Scarpa often used local materials like stone, wood, and glass in his designs. The chair could be made from a combination of these materials, with perhaps a wooden frame and a seat upholstered in a natural fiber or leather.\n\n2. **Color Palette**: Scarpa's work is characterized by earthy tones and the use of color to create contrast and depth. The chair might feature a muted color palette with accents of color that draw attention to specific parts of the design.\n\n3. **Form and Function**: Scarpa was known for his ability to combine form and function in a harmonious way. The chair could have a simple, yet elegant design that is both comfortable and visually appealing. It might feature clean lines and a minimalist aesthetic.\n\n4. **Texture and Pattern**: Scarpa's designs often incorporate textures and patterns that add depth and interest to the space. The chair could be adorned with textured fabrics or upholstery, or it could have a patterned backrest or armrests.\n\n5. **Lighting**: Scarpa was known for his use of natural light in his designs. The chair might feature cutouts or openings that allow light to pass through and create interesting shadows and reflections.\n\n6. **Integration with the Environment**: Scarpa's work often blended seamlessly with its surroundings, creating a sense of unity between the object and its environment. The chair could be designed in such a way that it complements the space it is placed in, whether that's a modern living room or a traditional dining area.\n\n7. **Craftsmanship**: Scarpa was known for his attention to detail and his commitment to craftsmanship. The chair would likely be handcrafted with precision and care, showcasing the skill of the artisans who created it.\n\n8. **Proportions**: Scarpa's designs often featured a balance between different elements within a space. The chair could have proportions that are pleasing to the eye, with a harmonious relationship between its height, width, and depth.\n\n9. **Functionality**: Despite the artistic flair of his designs, Scarpa always prioritized functionality. The chair would likely be comfortable and supportive, providing adequate backrest and armrest support for those who use it.\n\n10. **Sustainability**: While not explicitly stated in Scarpa's work, there is a sense of sustainability in the way he used materials and designed spaces that were both functional and aesthetically pleasing. The chair could be made from sustainable materials or feature design elements that promote recycling or upcycling.\n\nRemember, this description is speculative as there isn't an actual chair visible in the image you provided."
+      ]
+    },
+    {
+      "id": 41,
+      "type": "IF_ImagePrompt",
+      "pos": [
+        -1030,
+        -640
+      ],
+      "size": {
+        "0": 400,
+        "1": 452
+      },
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 72
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Question",
+          "type": "STRING",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "Response",
+          "type": "STRING",
+          "links": [
+            77,
+            96
+          ],
+          "shape": 3,
+          "slot_index": 1
+        },
+        {
+          "name": "Negative",
+          "type": "STRING",
+          "links": [
+            95
+          ],
+          "shape": 3,
+          "slot_index": 2
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "IF_ImagePrompt"
+      },
+      "widgets_values": [
+        "Describe a chair with the style of this kind of architecture, architect is eero saarinen",
+        "localhost",
+        "11434",
+        "ollama",
+        "llava:latest",
+        "None",
+        "None",
+        "None",
+        "None",
+        0,
+        265,
+        284352111592331,
+        "randomize",
+        false,
+        false
+      ]
+    },
+    {
+      "id": 26,
+      "type": "LoadImage",
+      "pos": [
+        -1470,
+        -640
+      ],
+      "size": [
+        365.21706272879794,
+        458.1454959941466
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            72
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "vestibulo-590x350-1.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 56,
+      "type": "PreviewImage",
+      "pos": [
+        3935,
+        -88
+      ],
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 84
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 52,
+      "type": "Image Remove Background (rembg)",
+      "pos": [
+        3598,
+        -86
+      ],
+      "size": {
+        "0": 260.3999938964844,
+        "1": 26
+      },
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 80
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            84
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Image Remove Background (rembg)"
+      }
+    },
+    {
+      "id": 48,
+      "type": "TripoSRModelLoader",
+      "pos": [
+        2558,
+        -1102
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "TRIPOSR_MODEL",
+          "type": "TRIPOSR_MODEL",
+          "links": [
+            79
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TripoSRModelLoader"
+      },
+      "widgets_values": [
+        "TripoSR.ckpt",
+        8192
+      ]
+    },
+    {
+      "id": 51,
+      "type": "ImageRemoveBackground+",
+      "pos": [
+        2956,
+        -45
+      ],
+      "size": {
+        "0": 241.79998779296875,
+        "1": 46
+      },
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "rembg_session",
+          "type": "REMBG_SESSION",
+          "link": 91
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 90
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            92,
+            93
+          ],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageRemoveBackground+"
+      }
+    },
+    {
+      "id": 59,
+      "type": "RemBGSession+",
+      "pos": [
+        2552,
+        131
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "REMBG_SESSION",
+          "type": "REMBG_SESSION",
+          "links": [
+            91
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RemBGSession+"
+      },
+      "widgets_values": [
+        "u2net: general purpose",
+        "CUDA"
+      ]
+    },
+    {
+      "id": 73,
+      "type": "SaveImage",
+      "pos": [
+        2044,
+        -484
+      ],
+      "size": {
+        "0": 315,
+        "1": 270
+      },
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 123
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 47,
+      "type": "LoadImage",
+      "pos": [
+        2566,
+        -457
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            80,
+            90,
+            121
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "ComfyUI_00078_.png",
+        "image"
+      ]
+    },
+    {
+      "id": 54,
+      "type": "MaskToImage",
+      "pos": [
+        3307,
+        -250
+      ],
+      "size": {
+        "0": 210,
+        "1": 26
+      },
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 93
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            83
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MaskToImage"
+      }
+    }
+  ],
+  "links": [
+    [
+      72,
+      26,
+      0,
+      41,
+      0,
+      "IMAGE"
+    ],
+    [
+      77,
+      41,
+      1,
+      46,
+      0,
+      "STRING"
+    ],
+    [
+      78,
+      49,
+      0,
+      50,
+      0,
+      "MESH"
+    ],
+    [
+      79,
+      48,
+      0,
+      49,
+      0,
+      "TRIPOSR_MODEL"
+    ],
+    [
+      80,
+      47,
+      0,
+      52,
+      0,
+      "IMAGE"
+    ],
+    [
+      83,
+      54,
+      0,
+      55,
+      0,
+      "IMAGE"
+    ],
+    [
+      84,
+      52,
+      0,
+      56,
+      0,
+      "IMAGE"
+    ],
+    [
+      90,
+      47,
+      0,
+      51,
+      1,
+      "IMAGE"
+    ],
+    [
+      91,
+      59,
+      0,
+      51,
+      0,
+      "REMBG_SESSION"
+    ],
+    [
+      92,
+      51,
+      1,
+      49,
+      2,
+      "MASK"
+    ],
+    [
+      93,
+      51,
+      1,
+      54,
+      0,
+      "MASK"
+    ],
+    [
+      95,
+      41,
+      2,
+      62,
+      1,
+      "STRING"
+    ],
+    [
+      96,
+      41,
+      1,
+      61,
+      1,
+      "STRING"
+    ],
+    [
+      97,
+      61,
+      0,
+      63,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      98,
+      62,
+      0,
+      63,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      99,
+      60,
+      0,
+      63,
+      0,
+      "MODEL"
+    ],
+    [
+      101,
+      63,
+      0,
+      65,
+      0,
+      "LATENT"
+    ],
+    [
+      102,
+      60,
+      2,
+      65,
+      1,
+      "VAE"
+    ],
+    [
+      104,
+      60,
+      2,
+      66,
+      1,
+      "VAE"
+    ],
+    [
+      107,
+      60,
+      1,
+      61,
+      0,
+      "CLIP"
+    ],
+    [
+      108,
+      60,
+      1,
+      62,
+      0,
+      "CLIP"
+    ],
+    [
+      121,
+      47,
+      0,
+      49,
+      1,
+      "IMAGE"
+    ],
+    [
+      123,
+      65,
+      0,
+      73,
+      0,
+      "IMAGE"
+    ],
+    [
+      128,
+      74,
+      0,
+      63,
+      3,
+      "LATENT"
+    ]
+  ],
+  "groups": [
+    {
+      "title": "Group",
+      "bounding": [
+        2493,
+        -1221,
+        2045,
+        1609
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "locked": false
+    },
+    {
+      "title": "Group",
+      "bounding": [
+        -1530,
+        -1260,
+        3913,
+        1861
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "locked": false
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.6727499949325854,
+      "offset": [
+        -577.1615820569527,
+        1295.7076431496455
+      ]
+    }
+  },
+  "version": 0.4
+}

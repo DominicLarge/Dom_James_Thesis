@@ -1,0 +1,704 @@
+{
+  "last_node_id": 89,
+  "last_link_id": 152,
+  "nodes": [
+    {
+      "id": 81,
+      "type": "CLIPTextEncode",
+      "pos": [
+        -396,
+        -272
+      ],
+      "size": [
+        210,
+        54
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 141
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 140,
+          "widget": {
+            "name": "text"
+          },
+          "slot_index": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            145
+          ],
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 79,
+      "type": "VAEEncode",
+      "pos": [
+        -400,
+        -117
+      ],
+      "size": [
+        140,
+        46
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 135,
+          "slot_index": 0
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 138
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            136
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEEncode"
+      }
+    },
+    {
+      "id": 82,
+      "type": "CLIPTextEncode",
+      "pos": [
+        -403,
+        -410
+      ],
+      "size": [
+        210,
+        54
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 143,
+          "slot_index": 0
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 142,
+          "widget": {
+            "name": "text"
+          },
+          "slot_index": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            144
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 76,
+      "type": "IF_DisplayText",
+      "pos": [
+        -468,
+        -1016
+      ],
+      "size": [
+        601.3662861062974,
+        533.3097389417393
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 133,
+          "widget": {
+            "name": "text"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "IF_DisplayText"
+      },
+      "widgets_values": [
+        "",
+        "What a stunning piece of lighting!\n\nThe decorative light fixture I'm seeing is a sleek and modern vertical pendant that exudes elegance and sophistication. The main structure of the fixture is made from a sturdy metal frame, likely stainless steel or aluminum, which provides a strong foundation for the rest of the design.\n\nWrapped around this metal core is a mesh material, possibly a woven fabric or a metallic mesh, that adds texture and visual interest to the overall design. The mesh is intricately patterned with a series of interconnected hexagons or diamonds, creating a sense of depth and dimensionality.\n\nThe pendant's vertical shape allows it to make a statement in any room, drawing the eye upward towards its slender profile. Measuring approximately 30-40 inches tall, this fixture would be perfect for hanging above a kitchen island, dining table, or even a cozy reading nook.\n\nThe metal frame is likely finished with a high-gloss or matte coating, giving it a subtle sheen that catches the light just so. The mesh material, on the other hand, has a slightly textured appearance that adds warmth and tactility to the overall design.\n\nWhen lit, this pendant would cast a warm, soft glow, creating a cozy ambiance that's perfect for relaxing or entertaining. Its sleek, modern aesthetic makes it suitable for contemporary spaces, while its classic shape ensures it won't go out of style anytime soon.\n\nWhat do you think is the most striking feature of this decorative light fixture?"
+      ]
+    },
+    {
+      "id": 78,
+      "type": "KSamplerAdvanced",
+      "pos": [
+        52,
+        -371
+      ],
+      "size": {
+        "0": 315,
+        "1": 334
+      },
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 137
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 144
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 145,
+          "slot_index": 2
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 136,
+          "slot_index": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            146
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerAdvanced"
+      },
+      "widgets_values": [
+        "enable",
+        1042434001241641,
+        "randomize",
+        20,
+        8,
+        "euler",
+        "normal",
+        0,
+        10000,
+        "disable"
+      ]
+    },
+    {
+      "id": 83,
+      "type": "VAEDecode",
+      "pos": [
+        438,
+        11
+      ],
+      "size": {
+        "0": 210,
+        "1": 46
+      },
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 146
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 147
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            148,
+            150
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      }
+    },
+    {
+      "id": 84,
+      "type": "SaveImage",
+      "pos": [
+        947,
+        -264
+      ],
+      "size": [
+        315,
+        270
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 148
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "Image-2-Image"
+      ]
+    },
+    {
+      "id": 86,
+      "type": "PreviewImage",
+      "pos": [
+        764,
+        -389
+      ],
+      "size": [
+        646.9888941269578,
+        580.6520683971776
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 150
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 26,
+      "type": "LoadImage",
+      "pos": [
+        -1452,
+        -477
+      ],
+      "size": {
+        "0": 365.2170715332031,
+        "1": 458.1455078125
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            72,
+            135
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "Image (1).jfif",
+        "image"
+      ]
+    },
+    {
+      "id": 41,
+      "type": "IF_ImagePrompt",
+      "pos": [
+        -1030,
+        -640
+      ],
+      "size": [
+        448.0852795926669,
+        640.9908699541154
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 72
+        }
+      ],
+      "outputs": [
+        {
+          "name": "Question",
+          "type": "STRING",
+          "links": [],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "Response",
+          "type": "STRING",
+          "links": [
+            133,
+            142
+          ],
+          "shape": 3,
+          "slot_index": 1
+        },
+        {
+          "name": "Negative",
+          "type": "STRING",
+          "links": [
+            140
+          ],
+          "shape": 3,
+          "slot_index": 2
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "IF_ImagePrompt"
+      },
+      "widgets_values": [
+        "Describe the decorative light fixture you are seeing, in detail. It is a vertical, decorative pendant made from metal and mesh.",
+        "localhost",
+        "11434",
+        "ollama",
+        "llama3:latest",
+        "None",
+        "None",
+        "None",
+        "None",
+        0,
+        265,
+        107241639661255,
+        "randomize",
+        false,
+        false
+      ]
+    },
+    {
+      "id": 80,
+      "type": "CheckpointLoaderSimple",
+      "pos": [
+        -1007,
+        102
+      ],
+      "size": [
+        364.8586281833368,
+        98
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            137
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            141,
+            143
+          ],
+          "shape": 3,
+          "slot_index": 1
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            138,
+            147
+          ],
+          "shape": 3,
+          "slot_index": 2
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CheckpointLoaderSimple"
+      },
+      "widgets_values": [
+        "sd_xl_base_1.0_0.9vae.safetensors"
+      ]
+    },
+    {
+      "id": 89,
+      "type": "ImageBatchMultiple+",
+      "pos": [
+        -1541,
+        386
+      ],
+      "size": {
+        "0": 315,
+        "1": 138
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_1",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_2",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_4",
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_5",
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageBatchMultiple+"
+      },
+      "widgets_values": [
+        "lanczos"
+      ]
+    }
+  ],
+  "links": [
+    [
+      72,
+      26,
+      0,
+      41,
+      0,
+      "IMAGE"
+    ],
+    [
+      133,
+      41,
+      1,
+      76,
+      0,
+      "STRING"
+    ],
+    [
+      135,
+      26,
+      0,
+      79,
+      0,
+      "IMAGE"
+    ],
+    [
+      136,
+      79,
+      0,
+      78,
+      3,
+      "LATENT"
+    ],
+    [
+      137,
+      80,
+      0,
+      78,
+      0,
+      "MODEL"
+    ],
+    [
+      138,
+      80,
+      2,
+      79,
+      1,
+      "VAE"
+    ],
+    [
+      140,
+      41,
+      2,
+      81,
+      1,
+      "STRING"
+    ],
+    [
+      141,
+      80,
+      1,
+      81,
+      0,
+      "CLIP"
+    ],
+    [
+      142,
+      41,
+      1,
+      82,
+      1,
+      "STRING"
+    ],
+    [
+      143,
+      80,
+      1,
+      82,
+      0,
+      "CLIP"
+    ],
+    [
+      144,
+      82,
+      0,
+      78,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      145,
+      81,
+      0,
+      78,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      146,
+      78,
+      0,
+      83,
+      0,
+      "LATENT"
+    ],
+    [
+      147,
+      80,
+      2,
+      83,
+      1,
+      "VAE"
+    ],
+    [
+      148,
+      83,
+      0,
+      84,
+      0,
+      "IMAGE"
+    ],
+    [
+      150,
+      83,
+      0,
+      86,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.7400249944258459,
+      "offset": [
+        1323.380262317938,
+        1007.7362690085913
+      ]
+    }
+  },
+  "version": 0.4
+}

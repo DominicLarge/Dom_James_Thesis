@@ -1,0 +1,881 @@
+{
+  "last_node_id": 84,
+  "last_link_id": 145,
+  "nodes": [
+    {
+      "id": 81,
+      "type": "EmptyLatentImage",
+      "pos": [
+        292.96674033129653,
+        122.20700833296445
+      ],
+      "size": {
+        "0": 315,
+        "1": 106
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            135
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "EmptyLatentImage"
+      },
+      "widgets_values": [
+        1024,
+        1024,
+        1
+      ]
+    },
+    {
+      "id": 77,
+      "type": "PreviewImage",
+      "pos": [
+        1220.9667403312965,
+        -131.79299166703558
+      ],
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 129
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 73,
+      "type": "SaveImage",
+      "pos": [
+        1424.9667403312965,
+        -509.79299166703566
+      ],
+      "size": {
+        "0": 315,
+        "1": 270
+      },
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 123
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 83,
+      "type": "RemBGSession+",
+      "pos": [
+        2700,
+        -661
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "REMBG_SESSION",
+          "type": "REMBG_SESSION",
+          "links": [
+            138
+          ],
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RemBGSession+"
+      },
+      "widgets_values": [
+        "u2net: general purpose",
+        "CUDA"
+      ]
+    },
+    {
+      "id": 47,
+      "type": "LoadImage",
+      "pos": [
+        2582,
+        -408
+      ],
+      "size": {
+        "0": 315,
+        "1": 314
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "00055.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 82,
+      "type": "ImageRemoveBackground+",
+      "pos": [
+        3102,
+        -467
+      ],
+      "size": {
+        "0": 241.79998779296875,
+        "1": 46
+      },
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "rembg_session",
+          "type": "REMBG_SESSION",
+          "link": 138,
+          "slot_index": 0
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 145
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            139,
+            142
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            140,
+            141
+          ],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageRemoveBackground+"
+      }
+    },
+    {
+      "id": 65,
+      "type": "VAEDecode",
+      "pos": [
+        1159,
+        -639
+      ],
+      "size": {
+        "0": 210,
+        "1": 46
+      },
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 101
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 136
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            123,
+            129,
+            145
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      }
+    },
+    {
+      "id": 49,
+      "type": "TripoSRSampler",
+      "pos": [
+        3516,
+        -1051
+      ],
+      "size": {
+        "0": 315,
+        "1": 122
+      },
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "TRIPOSR_MODEL",
+          "link": 79
+        },
+        {
+          "name": "reference_image",
+          "type": "IMAGE",
+          "link": 142
+        },
+        {
+          "name": "reference_mask",
+          "type": "MASK",
+          "link": 141,
+          "slot_index": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MESH",
+          "type": "MESH",
+          "links": [
+            78
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TripoSRSampler"
+      },
+      "widgets_values": [
+        512,
+        10
+      ]
+    },
+    {
+      "id": 48,
+      "type": "TripoSRModelLoader",
+      "pos": [
+        3126,
+        -1047
+      ],
+      "size": {
+        "0": 315,
+        "1": 82
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "TRIPOSR_MODEL",
+          "type": "TRIPOSR_MODEL",
+          "links": [
+            79
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TripoSRModelLoader"
+      },
+      "widgets_values": [
+        "model.ckpt",
+        8192
+      ]
+    },
+    {
+      "id": 54,
+      "type": "MaskToImage",
+      "pos": [
+        3520,
+        -393
+      ],
+      "size": {
+        "0": 210,
+        "1": 26
+      },
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 140
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            83
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MaskToImage"
+      }
+    },
+    {
+      "id": 56,
+      "type": "PreviewImage",
+      "pos": [
+        3303,
+        -270
+      ],
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 139
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 55,
+      "type": "PreviewImage",
+      "pos": [
+        3614,
+        -277
+      ],
+      "size": {
+        "0": 210,
+        "1": 246
+      },
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 83
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 79,
+      "type": "CLIPTextEncode",
+      "pos": [
+        97.96674033129648,
+        -646.7929916670356
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 130
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            133
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "A geometrically accurate cube, with the dimensions of 1 meter in length, 1 meter in width, and 1 meter in height, made out of metal, in an empty room"
+      ]
+    },
+    {
+      "id": 50,
+      "type": "TripoSRViewer",
+      "pos": [
+        3916,
+        -916
+      ],
+      "size": [
+        783.1542446602334,
+        683.1542446602334
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mesh",
+          "type": "MESH",
+          "link": 78
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "TripoSRViewer"
+      },
+      "widgets_values": [
+        null
+      ]
+    },
+    {
+      "id": 84,
+      "type": "LoadImagesFromDir //Inspire",
+      "pos": [
+        2669,
+        39
+      ],
+      "size": {
+        "0": 315,
+        "1": 170
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 4,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3
+        },
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImagesFromDir //Inspire"
+      },
+      "widgets_values": [
+        "C:\\Users\\dxl33\\OneDrive - Acuity Brands, Inc\\Desktop\\Continuing Education\\MASTERS\\Thesis\\Cube Images",
+        172,
+        0,
+        false
+      ]
+    },
+    {
+      "id": 80,
+      "type": "CLIPTextEncode",
+      "pos": [
+        76,
+        -297
+      ],
+      "size": {
+        "0": 400,
+        "1": 200
+      },
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 131
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            134
+          ],
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "text, watermark, background noise, people, distortion"
+      ]
+    },
+    {
+      "id": 78,
+      "type": "CheckpointLoaderSimple",
+      "pos": [
+        -424,
+        -428
+      ],
+      "size": {
+        "0": 315,
+        "1": 98
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            132
+          ],
+          "shape": 3
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            130,
+            131
+          ],
+          "shape": 3,
+          "slot_index": 1
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            136
+          ],
+          "shape": 3,
+          "slot_index": 2
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CheckpointLoaderSimple"
+      },
+      "widgets_values": [
+        "sd_xl_turbo_1.0_fp16.safetensors"
+      ]
+    },
+    {
+      "id": 63,
+      "type": "KSamplerAdvanced",
+      "pos": [
+        708,
+        -398
+      ],
+      "size": {
+        "0": 315,
+        "1": 334
+      },
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 132,
+          "slot_index": 0
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 133
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 134,
+          "slot_index": 2
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 135
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            101
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "KSamplerAdvanced"
+      },
+      "widgets_values": [
+        "enable",
+        204899453871730,
+        "randomize",
+        20,
+        8,
+        "dpmpp_2m_sde",
+        "karras",
+        0,
+        10000,
+        "disable"
+      ]
+    }
+  ],
+  "links": [
+    [
+      78,
+      49,
+      0,
+      50,
+      0,
+      "MESH"
+    ],
+    [
+      79,
+      48,
+      0,
+      49,
+      0,
+      "TRIPOSR_MODEL"
+    ],
+    [
+      83,
+      54,
+      0,
+      55,
+      0,
+      "IMAGE"
+    ],
+    [
+      101,
+      63,
+      0,
+      65,
+      0,
+      "LATENT"
+    ],
+    [
+      123,
+      65,
+      0,
+      73,
+      0,
+      "IMAGE"
+    ],
+    [
+      129,
+      65,
+      0,
+      77,
+      0,
+      "IMAGE"
+    ],
+    [
+      130,
+      78,
+      1,
+      79,
+      0,
+      "CLIP"
+    ],
+    [
+      131,
+      78,
+      1,
+      80,
+      0,
+      "CLIP"
+    ],
+    [
+      132,
+      78,
+      0,
+      63,
+      0,
+      "MODEL"
+    ],
+    [
+      133,
+      79,
+      0,
+      63,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      134,
+      80,
+      0,
+      63,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      135,
+      81,
+      0,
+      63,
+      3,
+      "LATENT"
+    ],
+    [
+      136,
+      78,
+      2,
+      65,
+      1,
+      "VAE"
+    ],
+    [
+      138,
+      83,
+      0,
+      82,
+      0,
+      "REMBG_SESSION"
+    ],
+    [
+      139,
+      82,
+      0,
+      56,
+      0,
+      "IMAGE"
+    ],
+    [
+      140,
+      82,
+      1,
+      54,
+      0,
+      "MASK"
+    ],
+    [
+      141,
+      82,
+      1,
+      49,
+      2,
+      "MASK"
+    ],
+    [
+      142,
+      82,
+      0,
+      49,
+      1,
+      "IMAGE"
+    ],
+    [
+      145,
+      65,
+      0,
+      82,
+      1,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "title": "Group",
+      "bounding": [
+        2493,
+        -1221,
+        2045,
+        1609
+      ],
+      "color": "#3f789e",
+      "font_size": 24
+    },
+    {
+      "title": "Group",
+      "bounding": [
+        -480,
+        -894,
+        2277,
+        1178
+      ],
+      "color": "#3f789e",
+      "font_size": 24
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.5559917313492498,
+      "offset": [
+        924.0808065161068,
+        1521.0620849216912
+      ]
+    }
+  },
+  "version": 0.4
+}
