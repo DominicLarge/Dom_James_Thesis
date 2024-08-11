@@ -1,0 +1,1 @@
+ML_input = {'Height' :3.5 , 'Thickness': 0.25, 'Sides' : 5.0, 'Corner Fillet': 0.41, 'Edge Fillet' : 0.1, 'Leg Radius' : 0.2, 'Skew' : None, 'Taper' : 0.25}
