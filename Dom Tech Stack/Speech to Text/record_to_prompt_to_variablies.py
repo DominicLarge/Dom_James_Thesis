@@ -17,6 +17,13 @@ import re
 from word2number import w2n
 import nltk
 from nltk import word_tokenize, pos_tag, sent_tokenize
+import json
+from google.colab import files
+from IPython.display import display, Javascript
+import base64
+import speech_recognition as sr
+from pydub import AudioSegment
+import io
 
 # Download NLTK resources
 nltk.download('punkt')
@@ -35,15 +42,13 @@ def upload_audio(audio_data):
 
 output.register_callback('notebook.upload_audio', upload_audio)
 
-from IPython.display import display, Javascript
-import base64
-import speech_recognition as sr
-from pydub import AudioSegment
-import io
-
 """## Record Audio Prompt
 
-**Use Prompt Format:** I need to create a table that has a height of [----] feet , with a thickness of [----] inches, with [----] sides, and a radius of [----] feet. The table must have a corner fillet of [----] inches, with overall edge fillets of [----] inches. For the legs, make the leg radius [----] inches, with a skew of [----] degrees and a taper of [----] inches.
+Variables needed in Spoken Prompt: **Height, Corner Fillet, Leg Insert, Sides, Thickness**
+
+When speaking your Prompt, remember to make sure that your Variable in the prompt and its associated value are closer together than any other values listed. If they are too close, they will get confused and mixed, i.e, the more detail and words used, the better!
+
+Example: " *Please create a table that has 4 sides, with a height of 3 feet and use a leg insert of 4 inches. Make it 2 inches thick with corner fillets of 4 inches.* "
 """
 
 # JavaScript code for recording audio
@@ -157,15 +162,16 @@ def punctuate_text(text):
 
 print(transcript_text)
 
-"""**Use Prompt Format:** I need to create a table that has a height of [----] feet , with a thickness of [----] inches, with [----] sides, and a radius of [----] feet. The table must have a corner fillet of [----] inches, with overall edge fillets of [----] inches. For the legs, make the leg radius [----] inches, with a skew of [----] degrees and a taper of [----] inches."""
-
 prompt = transcript_text
 print(prompt)
 
-"""## Capitalize / Fix Prompt"""
+"""## Capitalize"""
+
+#Option to Type Prompt Instead
+prompt = "I need to create a table with 3 foot sides and a height of 3 feet and use a leg insert of 4 inches make it 2 inches thick with corner fillets of 4 inches."
 
 # List of specific words to capitalize
-words_to_capitalize = ["tall", "height", "thickness", "radius", "corner fillet", "edge fillets", "leg radius", "skew", "taper", "degrees", "ft", "feet", "inch", "inches", "in"]
+words_to_capitalize = ["tall", "height", "thickness", "thick", "radius", "corner fillet", "edge fillets", "leg insert", "high", "sides", "ft", "feet", "inch", "inches", "in", "fillet", "fillets",]
 
 # Tokenize the prompt into words
 tokens = word_tokenize(prompt)
@@ -198,55 +204,111 @@ print(capitalized_prompt)
 
 """## Find / Assign Variables for Family Member Creation"""
 
-import re
+# Define possible synonyms for each parameter
+parameter_synonyms = {
+    "Height": ["height", "tall", "elevation", "high"],
+    "Corner Fillet": ["corner fillet", "fillet", "rounded corner", "corner fillets", "fillets"],
+    "Leg Insert": ["leg insert", "leg distance", "leg spacing", "inserts", "leg insert distance of "],
+    "Sides": ["sides", "edges"],
+    "Thickness": ["thickness", "thick", "depth"]
+}
 
-def extract_variables(capitalized_prompt):
-    # Define regular expressions for each variable
-    height_pattern = r'Height\s+of\s+(\d+\.?\d*)\s+Ft'
-    thickness_pattern = r'Thickness\s+of\s+(\d+\.?\d*)\s+In'
-    sides_pattern = r'with\s+(\d+)\s+Sides'
-    radius_pattern = r'Radius\s+of\s+(\d+\.?\d*)\s+Ft'
-    cornerfillet_pattern = r'corner Fillet\s+of\s+(\d+\.?\d*)\s+Inches'
-    edgefillet_pattern = r'Edge Fillets\s+of\s+(\d+\.?\d*)\s+Inches'
-    legradius_pattern = r'Leg Radius\s+(\d+\.?\d*)\s+Inches'
-    skew_pattern = r'Skew\s+of\s+(\d+\.?\d*)\s+Degrees'
-    taper_pattern = r'Taper\s+of\s+(\d+\.?\d*)\s+Inches'
+# Function to find the closest number to a keyword, considering proximity and grammar
+def find_closest_value(keyword, text):
+    pattern = re.compile(r'(\b\d+(\.\d+)?\b)\s*(feet|foot|inches|inch|ft|in|inches.|sides)?')
+    matches = pattern.finditer(text)
+    keyword_position = text.find(keyword)
 
-    # Search for each pattern in the prompt
-    height_match = re.search(height_pattern, capitalized_prompt, re.IGNORECASE)
-    thickness_match = re.search(thickness_pattern, capitalized_prompt, re.IGNORECASE)
-    sides_match = re.search(sides_pattern, capitalized_prompt, re.IGNORECASE)
-    radius_match = re.search(radius_pattern, capitalized_prompt, re.IGNORECASE)
-    cornerfillet_match = re.search(cornerfillet_pattern, capitalized_prompt, re.IGNORECASE)
-    edgefillet_match = re.search(edgefillet_pattern, capitalized_prompt, re.IGNORECASE)
-    legradius_match = re.search(legradius_pattern, capitalized_prompt, re.IGNORECASE)
-    skew_match = re.search(skew_pattern, capitalized_prompt, re.IGNORECASE)
-    taper_match = re.search(taper_pattern, capitalized_prompt, re.IGNORECASE)
+    closest_distance = float('inf')
+    closest_value = None
 
-    # Extract values or return None if not found
-    height = float(height_match.group(1)) if height_match else None
-    thickness = float(thickness_match.group(1)) if thickness_match else None
-    sides = int(sides_match.group(1)) if sides_match else None
-    radius = float(radius_match.group(1)) if radius_match else None
-    cornerfillet = float(cornerfillet_match.group(1)) if cornerfillet_match else None
-    edgefillet = float(edgefillet_match.group(1)) if edgefillet_match else None
-    legradius = float(legradius_match.group(1)) if legradius_match else None
-    skew = float(skew_match.group(1)) if skew_match else None
-    taper = float(taper_match.group(1)) if taper_match else None
+    for match in matches:
+        number, _, unit = match.groups()
+        start, end = match.span()
 
-    return {
-        'Height': height,
-        'Thickness': thickness,
-        'Sides': sides,
-        'Radius': radius,
-        'Corner Fillet': cornerfillet,
-        'Edge Fillets': edgefillet,
-        'Leg Radius': legradius,
-        'Skew': skew,
-        'Taper': taper
+        # Calculate the distance between the keyword and the number
+        distance = abs(keyword_position - start)
+
+        # Determine the direction (before or after) of the keyword relative to the number
+        if keyword_position < start:  # Keyword before number
+            direction = "after"
+        else:  # Keyword after number
+            direction = "before"
+
+        # Only consider this match if it's closer than any previously found
+        if distance < closest_distance:
+            closest_distance = distance
+            closest_value = f"{number} {unit}".strip()
+
+            # Ensure grammatical correctness by checking direction
+            if direction == "after" and closest_distance > len(keyword):
+                continue
+
+    return closest_value
+
+# Extract parameters
+parameters = {}
+
+for parameter, synonyms in parameter_synonyms.items():
+    for synonym in synonyms:
+        if synonym in prompt:
+            value = find_closest_value(synonym, prompt)
+            if value:
+                parameters[parameter] = value
+                break
+
+# Output the extracted parameters
+print(json.dumps(parameters, indent=2))
+
+"""## Export JSON for Revit API"""
+
+parameters
+
+# Define the filename for the JSON file
+json_filename = "family_parameters.json"
+
+# Write the dictionary to a JSON file
+with open(json_filename, 'w') as json_file:
+    json.dump(parameters, json_file, indent=4)
+
+# Trigger a download of the JSON file in the browser
+files.download(json_filename)
+
+"""## Export Dictionary"""
+
+def convert_to_revit_units(value):
+    """Convert values to Revit-compatible units."""
+    if 'foot' in value or 'feet' in value:
+        number = re.match(r'(\d+)', value).group()
+        return f"{number}ft 0in"
+    elif 'inch' in value or 'inches' in value:
+        number = re.match(r'(\d+)', value).group()
+        return f"{number}in "
+    return value
+
+def prepare_revit_parameters(parameters):
+    # Define the parameter dictionary with mappings to Revit family parameters
+    revit_parameters = {
+        "Height": {"ParameterName": "Height", "Value": convert_to_revit_units(parameters.get("Height", "")), "Unit": "feet"},
+        "Thickness": {"ParameterName": "Thickness", "Value": convert_to_revit_units(parameters.get("Thickness", "")), "Unit": "in"},
+        "Sides": {"ParameterName": "Number of Sides", "Value": parameters.get("Sides", ""), "Unit": "in"},
+        "Leg Insert": {"ParameterName": "Leg Insert", "Value": convert_to_revit_units(parameters.get("Leg Insert", "")), "Unit": "in"},
+        "Corner Fillet": {"ParameterName": "Corner Fillet", "Value": convert_to_revit_units(parameters.get("Corner Fillet", "")), "Unit": "in"}
     }
 
-# Example usage
-variables = extract_variables(capitalized_prompt)
-print(variables)
+    return revit_parameters
 
+revit_parameters = prepare_revit_parameters(parameters)
+
+# Define the filename for the JSON file
+json_filename = "family_parameters.json"
+
+# Write the dictionary to a JSON file
+with open(json_filename, 'w') as json_file:
+    json.dump(revit_parameters, json_file, indent=4)
+
+# Output the dictionary to check the structure
+print(json.dumps(revit_parameters, indent=4))
+
+# Trigger a download of the JSON file in the browser
+files.download(json_filename)
