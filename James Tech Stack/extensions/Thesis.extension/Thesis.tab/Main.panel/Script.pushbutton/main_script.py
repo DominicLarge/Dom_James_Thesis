@@ -1,5 +1,10 @@
 "Prompts voice command for Revit"
 
+from pydub import AudioSegment
+import re
+from word2number import w2n
+
+
 import Autodesk.Revit.DB as DB
 import Autodesk.Revit.UI as UI
 
