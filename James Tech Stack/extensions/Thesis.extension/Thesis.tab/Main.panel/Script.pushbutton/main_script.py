@@ -25,13 +25,17 @@ for elementid in selected:
         
     if element: 
                 
-            for param, value in voice_input.items():
-        
-                parameters = element.GetParameters(param)
+        for param, value in voice_input.items():
+                
+            parameter = element.LookupParameter(param)
 
-                if parameters:
-                    for parameter in parameters:
-                        parameter.Set(value)
+            if parameter:
+                parameter.Set(value)
+            # parameters = element.GetParameters(param)
+
+            # if parameters:
+            #     for parameter in parameters:
+            #         parameter.Set(value)
     
 
 
