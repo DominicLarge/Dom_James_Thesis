@@ -16,7 +16,7 @@ selected = ui.Selection.GetElementIds()
 
 elements = DB.FilteredElementCollector(doc)
 
-t = DB.Transaction(doc, "Interperting Voice Command")
+t = DB.Transaction(doc, "Voice Command")
 t.Start()
 
 for elementid in selected:
