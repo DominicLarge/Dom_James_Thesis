@@ -1,8 +1,16 @@
+# !python3
 "Prompts voice command for Revit"
 
 from pydub import AudioSegment
 import re
 from word2number import w2n
+import nltk
+from nltk import word_tokenize, pos_tag, sent_tokenize
+import json
+import base64
+import speech_recognition as sr
+from pydub import AudioSegment
+
 
 
 import Autodesk.Revit.DB as DB
