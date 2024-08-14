@@ -1,0 +1,30 @@
+{
+    "Action": "Modify",
+    "Parameters": {
+        "Height": {
+            "ParameterName": "Height",
+            "Value": "3ft 0in",
+            "Unit": "feet"
+        },
+        "Thickness": {
+            "ParameterName": "Thickness",
+            "Value": "2in ",
+            "Unit": "in"
+        },
+        "Sides": {
+            "ParameterName": "Number of Sides",
+            "Value": "3 foot",
+            "Unit": "in"
+        },
+        "Leg Insert": {
+            "ParameterName": "Leg Insert",
+            "Value": "4in ",
+            "Unit": "in"
+        },
+        "Corner Fillet": {
+            "ParameterName": "Corner Fillet",
+            "Value": "4in ",
+            "Unit": "in"
+        }
+    }
+}
