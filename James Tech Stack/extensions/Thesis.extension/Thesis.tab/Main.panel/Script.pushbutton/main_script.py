@@ -23,7 +23,7 @@ ui = __revit__.ActiveUIDocument
 #Get parameters from voice input
 #[INSERT DOM'S CODE HERE]
 
-voice_input = {'Height' :3.5 , 'Thickness': 0.25, 'Sides' : 5.0, 'Corner Fillet': 0.41, 'Edge Fillet' : 0.1, 'Leg Radius' : 0.2, 'Skew' : None, 'Taper' : 0.25}
+voice_input = {'Height' :4.5 , 'Thickness': 0.25, 'Sides' : 5.0, 'Corner Fillet': 0.41, 'Edge Fillet' : 0.1, 'Leg Radius' : 0.2, 'Skew' : None, 'Taper' : 0.25}
 
 selected = ui.Selection.GetElementIds()
 
@@ -48,8 +48,7 @@ for elementid in selected:
 
             # if parameters:
             #     for parameter in parameters:
-            #         parameter.Set(value)
-    
+            #         parameter.Set(value)   
 
 
 
