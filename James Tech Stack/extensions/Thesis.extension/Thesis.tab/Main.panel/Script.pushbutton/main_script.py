@@ -44,11 +44,11 @@ for elementid in selected:
 
             if parameter:
                 parameter.Set(value)
-            # parameters = element.GetParameters(param)
+            parameters = element.GetParameters(param)
 
-            # if parameters:
-            #     for parameter in parameters:
-            #         parameter.Set(value)   
+            if parameters:
+                for parameter in parameters:
+                    parameter.Set(value)   
 
 
 
