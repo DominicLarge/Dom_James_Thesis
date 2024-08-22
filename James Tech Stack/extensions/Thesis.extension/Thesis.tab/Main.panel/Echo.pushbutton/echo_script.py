@@ -10,6 +10,19 @@ import speech_recognition as sr
 from pydub import AudioSegment
 import io
 
+import os
+import shutil
+import glob
+
+import Autodesk.Revit.DB as DB
+import Autodesk.Revit.UI as UI
+import Autodesk.Revit.ApplicationServices as AS
+import Autodesk.Revit.Creation as CR
+
+# Define Revit Doc
+doc = __revit__.ActiveUIDocument.Document
+ui = __revit__.ActiveUIDocument
+
 #RECORD VOICE
 class Recorder:
     def __init__(self, silence_timeout=15):
@@ -63,10 +76,34 @@ def main():
     # 'prompt' is now defined and can be used in further processing
     return prompt
 
-# Run the main function and capture the prompt
-prompt = main()
 
-print(prompt)
+# Define keywords for actions
+action_keywords = {
+    "Create": ["create", "make", "build", "design", "generate"],
+    "Modify": ["modify", "change", "adjust", "alter", "update"]
+}
+
+
+# Function to detect action
+def detect_action(text):
+    # Convert text to lowercase for case-insensitive comparison
+    text = text.lower()
+    print(f"Processing text: '{text}'")  # Debugging: print the processed text
+
+    # Initialize action variable
+    detected_action = "UNKNOWN"
+
+    # Check for CREATE keywords
+    create_keywords = action_keywords["Create"]
+    if any(keyword in text for keyword in create_keywords):
+        detected_action = "Create"
+
+    # Check for MODIFY keywords
+    modify_keywords = action_keywords["Modify"]
+    if any(keyword in text for keyword in modify_keywords):
+        detected_action = "Modify"
+
+    return detected_action
 
 
 #SET UP PARAMETERS
@@ -79,6 +116,7 @@ parameter_synonyms = {
     "Sides": ["sides", "edges"],
     "Thickness": ["thickness", "thick", "depth"]
 }
+
 
 # Function to find the closest number to a keyword, considering proximity and grammar
 def find_closest_value(keyword, text):
@@ -113,8 +151,132 @@ def find_closest_value(keyword, text):
 
     return closest_value
 
+
+def extract_ids(text):
+    # Normalize the text to lowercase
+    text = text.lower()
+
+    # Define keywords indicating ID context
+    id_keywords = ['table', 'tables']
+
+    # Initialize a list to store IDs
+    ids = []
+
+    # Split the text into words
+    words = text.split()
+
+    # Iterate through the words to find IDs after the keywords
+    for i, word in enumerate(words):
+        if word == "selected":
+                ids.append("selected")
+        if word in id_keywords:
+            # Collect numbers that follow the keyword, handling cases with "and"
+            j = i + 1
+            while j < len(words):
+                if words[j].isdigit():
+                    ids.append(int(words[j]))
+                elif 'and' in words[j]:
+                    # Continue if "and" is present to capture the number after it
+                    j += 1
+                    if j < len(words) and words[j].isdigit():
+                        ids.append(int(words[j]))
+                elif ',' in words[j]:
+                    # Handle cases where numbers are followed by a comma
+                    comma_separated_ids = [int(num) for num in words[j].split(',') if num.isdigit()]
+                    ids.extend(comma_separated_ids)
+                else:
+                    break
+                j += 1
+
+    # Remove duplicates and sort IDs
+    ids = sorted(set(ids))
+
+    return ids
+
+# Test the function with the example prompt
+# Function to extract just the numeric part of a value
+def extract_number(value):
+    # Regular expression to find the numeric part of the string
+    match = re.search(r'\d+(\.\d+)?', value)
+    if match:
+        return match.group()
+    return "Not specified"
+
+# Prepare Revit parameters including action type
+def prepare_revit_parameters(parameters, action, ids):
+    # Define the parameter dictionary with mappings to Revit family parameters
+    revit_parameters = {
+        "Action": action,
+        "Table IDs": ids,
+        "Parameters": {
+            "Height": {
+                "ParameterName": "Height",
+                "Value": extract_number(parameters.get("Height", "Not specified")),
+                "Unit": "feet"  # You can adjust or remove this if needed
+            },
+            "Thickness": {
+                "ParameterName": "Thickness",
+                "Value": extract_number(parameters.get("Thickness", "Not specified")),
+                "Unit": "inches"
+            },
+            "Sides": {
+                "ParameterName": "Number of Sides",
+                "Value": extract_number(parameters.get("Sides", "Not specified")),
+                "Unit": "feet"  # You can adjust or remove this if needed
+            },
+            "Leg Insert": {
+                "ParameterName": "Leg Insert",
+                "Value": extract_number(parameters.get("Leg Insert", "Not specified")),
+                "Unit": "inches"
+            },
+            "Corner Fillet": {
+                "ParameterName": "Corner Fillet",
+                "Value": extract_number(parameters.get("Corner Fillet", "Not specified")),
+                "Unit": "inches"
+            }
+        }
+    }
+
+    return revit_parameters
+
+def modify_parameters(ids, parameters):
+    elements = []
+    selected = ui.Selection.GetElementIds()
+    filtered_elements = DB.FilteredElementCollector(doc)
+
+    if "selected" in ids:
+        elements = selected
+    else:
+        elements = filtered_elements
+
+    t = DB.Transaction(doc, "Voice Command: Modify Parameters")
+    t.Start()
+
+    for elementid in elements:
+
+        element = doc.GetElement(elementid)
+        
+        if element: 
+                
+            for param, value in parameters.items():
+                
+                parameter = element.LookupParameter(param)
+
+                if parameter:                    
+                    parameter.Set(int(value.split()[0]))
+                parameters = element.GetParameters(param)
+
+                if parameters:
+                 for parameter in parameters:
+                        parameter.Set(value)   
+    t.Commit()
+
+# Run the main function and capture the prompt
+prompt = main()
+
 # Extract parameters
 parameters = {}
+
 
 for parameter, synonyms in parameter_synonyms.items():
     for synonym in synonyms:
@@ -125,5 +287,22 @@ for parameter, synonyms in parameter_synonyms.items():
                 break
 
 
+# Use the prompt to determine action
+action = detect_action(prompt)
+print(f"Detected Action: {action}")
 
-print(json.dumps(parameters, indent=2))
+
+ids = extract_ids(prompt)
+
+
+# Prepare Revit parameters
+revit_parameters = prepare_revit_parameters(parameters, action, ids)
+
+
+print(action)
+print(ids)
+print(parameters)
+
+
+if action == "Modify":
+    modify_parameters(ids, parameters)

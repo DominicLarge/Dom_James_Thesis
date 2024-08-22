@@ -25,32 +25,36 @@ ui = __revit__.ActiveUIDocument
 
 voice_input = {'Height' :4.5 , 'Thickness': 0.25, 'Sides' : 5.0, 'Corner Fillet': 0.41, 'Edge Fillet' : 0.1, 'Leg Radius' : 0.2, 'Skew' : None, 'Taper' : 0.25}
 
-selected = ui.Selection.GetElementIds()
 
-elements = DB.FilteredElementCollector(doc)
+def modify_parameters(ids, parameters):
+    elements = []
+    selected = ui.Selection.GetElementIds()
+    filtered_elements = DB.FilteredElementCollector(doc)
 
-t = DB.Transaction(doc, "Voice Command")
-t.Start()
+    if "selected" in ids:
+        elements = selected
+    else:
+        elements = filtered_elements
 
-for elementid in selected:
+    t = DB.Transaction(doc, "Voice Command: Modify Parameters")
+    t.Start()
 
-    element = doc.GetElement(elementid)
+    for elementid in elements:
+
+        element = doc.GetElement(elementid)
         
-    if element: 
+        if element: 
                 
-        for param, value in voice_input.items():
+            for param, value in voice_input.items():
                 
-            parameter = element.LookupParameter(param)
+                parameter = element.LookupParameter(param)
 
-            if parameter:
-                parameter.Set(value)
-            parameters = element.GetParameters(param)
+                if parameter:
+                    parameter.Set(value)
+                parameters = element.GetParameters(param)
 
-            if parameters:
-                for parameter in parameters:
-                    parameter.Set(value)   
-
-
-
-t.Commit()
+                if parameters:
+                 for parameter in parameters:
+                        parameter.Set(value)   
+    t.Commit()
 
