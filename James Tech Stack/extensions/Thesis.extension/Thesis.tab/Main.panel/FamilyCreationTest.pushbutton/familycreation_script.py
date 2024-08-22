@@ -2,7 +2,6 @@
 import os
 import shutil
 import glob
-import clr
 
 import Autodesk.Revit.DB as DB
 import Autodesk.Revit.UI as UI
@@ -18,7 +17,9 @@ library_path = "C:\Dom_James_Thesis\James Tech Stack\Revit Families"
 #replace with Dom's file selection
 template = "Table - Square.rfa"
 
-new_name = "Table1.rfa"
+new_name_input = "Table1"
+new_name = new_name_input +".rfa"
+
 
 # #Find family and copy, rename, load, and delete it
 loaded_family = None
@@ -40,26 +41,10 @@ def load_family(family, library, new_name, doc):
         # print(new_filepath)
         shutil.copy2(original_path, new_filepath)
 
-        box = clr.StrongBox[Family]()
         t1 = DB.Transaction(doc, "Load family")
         t1.Start()
-        success = doc.LoadFamily(new_filepath, box)
-
-    
-        if success:
-            loaded_family = family.Value
-            name = loaded_family.Name
-            print(name)
-            # Get the first FamilySymbol from the loaded family
-            family_symbol_id = loaded_family.GetFamilySymbolIds().GetEnumerator().Current
-            family_symbol = doc.GetElement(family_symbol_id)
-        
-            # Ensure the FamilySymbol is active
-            if not family_symbol.IsActive:
-                family_symbol.Activate()
-                doc.Regenerate()
-
-
+        family_id = doc.LoadFamily(new_filepath)
+        print(family_id)
         
         t1.Commit()
 
@@ -68,4 +53,4 @@ def load_family(family, library, new_name, doc):
 
 load_family(template, library_path, new_name, doc)
 
-uidoc.PromptForFamilyInstancePlacement(family_symbol)
+# uidoc.PromptForFamilyInstancePlacement(family_symbol)
