@@ -194,7 +194,6 @@ Parameters:
   Range: Base Level: -1
   View Scale: 96
   Scale Value    1:: 96
-  System Color Schemes: N/A
   Color Scheme: N/A
   None: 135530
   Title on Sheet: 
@@ -263,7 +262,6 @@ Parameters:
   Range: Base Level: -1
   View Scale: 96
   Scale Value    1:: 96
-  System Color Schemes: N/A
   Color Scheme: N/A
   None: 135530
   Title on Sheet: 
@@ -806,7 +804,6 @@ Parameters:
   Range: Base Level: 30
   View Scale: 96
   Scale Value    1:: 96
-  System Color Schemes: N/A
   Color Scheme: N/A
   None: 135532
   Title on Sheet: 
@@ -875,7 +872,6 @@ Parameters:
   Range: Base Level: 30
   View Scale: 96
   Scale Value    1:: 96
-  System Color Schemes: N/A
   Color Scheme: N/A
   None: 135532
   Title on Sheet: 
@@ -8721,7 +8717,6 @@ Parameters:
   Range: Base Level: -1
   View Scale: 240
   Scale Value    1:: 240
-  System Color Schemes: N/A
   Color Scheme: N/A
   None: 135538
   Title on Sheet: 
@@ -8790,7 +8785,6 @@ Parameters:
   Range: Base Level: -1
   View Scale: 240
   Scale Value    1:: 240
-  System Color Schemes: N/A
   Color Scheme: N/A
   None: 135538
   Title on Sheet: 
@@ -8912,7 +8906,6 @@ Parameters:
   Family: 
   Family and Type: 
   Type: 
-  System Color Schemes: N/A
   Design Option: -1
   Family: 
   Family and Type: 
@@ -8957,7 +8950,6 @@ Parameters:
   Family: 
   Family and Type: 
   Type: 
-  System Color Schemes: N/A
   Design Option: -1
   Family: 
   Family and Type: 
@@ -9185,7 +9177,6 @@ Parameters:
   Family: 
   Family and Type: 
   Type: 
-  System Color Schemes: N/A
   Design Option: -1
   Family: 
   Family and Type: 
@@ -46393,6 +46384,8 @@ Parameters:
   Height Offset From Level: 0.0
   Thickness: 1.0
   Related to Mass: 0
+  Elevation at Bottom Core: -1.0
+  Elevation at Top Core: 0.0
   Elevation at Top: 0.0
   Elevation at Bottom: -1.0
   Mark: N/A
