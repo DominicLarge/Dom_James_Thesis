@@ -3,10 +3,13 @@
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.UI import *
 
-import subprocess
 import json
 from collections import defaultdict
 import os
+import aiohttp
+import asyncio
+from typing import List, Dict, Optional
+
 
 doc = __revit__.ActiveUIDocument.Document
 uidoc = __revit__.ActiveUIDocument
@@ -94,60 +97,57 @@ class RevitTextExporter(IExternalCommand):
 export_revit_to_text(__revit__.ActiveUIDocument.Document)
 
 
-def run_curl_command(curl_command):
-    print("Executing curl command:", " ".join(curl_command))
-    try:
-        result = subprocess.run(curl_command, capture_output=True, text=True, check=True)
-        print("Raw response from server:")
-        print(result.stdout)
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred while calling the API: {e}")
-        print(f"Stderr: {e.stderr}")
+
+
+class AsyncEmbeddingRetriever:
+    def __init__(self, url: str = "http://localhost:1234/v1/embeddings"):
+        self.url = url
+        self.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer not-needed"
+        }
+        self.model = "nomic-ai/nomic-embed-text-v1.5-GGUF/nomic-embed-text-v1.5.Q4_K_M.gguf"
+
+    async def get_embedding(self, session: aiohttp.ClientSession, text: str) -> Optional[List[float]]:
+        data = {
+            "input": text,
+            "model": self.model
+        }
+
+        try:
+            async with session.post(self.url, headers=self.headers, json=data) as response:
+                response_text = await response.text()
+                # print("Raw response from server:")
+                # print(response_text)
+
+                if response.status != 200:
+                    print(f"Error occurred while calling the API. Status: {response.status}")
+                    return None
+
+                response_json = json.loads(response_text)
+                if 'error' in response_json:
+                    print("Server returned an error:")
+                    print(json.dumps(response_json['error'], indent=2))
+                    return None
+
+                embedding = response_json['data'][0]['embedding']
+                return embedding
+
+        except aiohttp.ClientError as e:
+            print(f"Error occurred while calling the API: {e}")
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON response: {e}")
+            print("Raw response:", response_text)
+        except KeyError as e:
+            print(f"Unexpected response format: {e}")
+            print("Response structure:", json.dumps(response_json, indent=2))
+        
         return None
 
-
-def get_embedding(text, url="http://localhost:1234/v1/embeddings"):
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer not-needed"
-    }
-    
-    data = {
-        "input": text,
-        "model": "nomic-ai/nomic-embed-text-v1.5-GGUF/nomic-embed-text-v1.5.Q4_K_M.gguf"
-    }
-    
-    curl_command = [
-        "curl", "-X", "POST", url,
-        "-H", f"Content-Type: {headers['Content-Type']}",
-        "-H", f"Authorization: {headers['Authorization']}",
-        "-d", json.dumps(data)
-    ]
-
-    print(curl_command)
-    
-    response_text = run_curl_command(curl_command)
-    
-    if response_text is None:
-        return None
-    
-    try:
-        response = json.loads(response_text)
-        if 'error' in response:
-            print("Server returned an error:")
-            print(json.dumps(response['error'], indent=2))
-            return None
-        embedding = response['data'][0]['embedding']
-        return embedding
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON response: {e}")
-        print("Raw response:", response_text)
-    except KeyError as e:
-        print(f"Unexpected response format: {e}")
-        print("Response structure:", json.dumps(response, indent=2))
-    return None
-
+    async def get_embeddings(self, texts: List[str]) -> List[Optional[List[float]]]:
+        async with aiohttp.ClientSession() as session:
+            tasks = [self.get_embedding(session, text) for text in texts]
+            return await asyncio.gather(*tasks)
 
 def split_text_file(file_path):
     chunks = []
@@ -168,32 +168,56 @@ def split_text_file(file_path):
 
     return chunks
 
-# EMBEDDING MODEL
-model_name = "nomic-ai/nomic-embed-text-v1.5-GGUF/nomic-embed-text-v1.5.Q4_K_M.gguf"
+def get_writable_directory():
+    """
+    Try to find a writable directory, falling back to the temp directory if needed.
+    """
+    try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        test_file = os.path.join(current_dir, 'test_write.tmp')
+        with open(test_file, 'w') as f:
+            f.write('test')
+        os.remove(test_file)
+        return current_dir
+    except PermissionError:
+        return tempfile.gettempdir()
 
-def embed_document(document_to_embed):
-
-    current_dir = get_script_directory()
+async def embed_document(document_to_embed):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(current_dir, document_to_embed)
 
-    chunks = split_text_file(file_path)
-        
-    embeddings = []
-    for i, line in enumerate(chunks):
-        print(f'{i} / {len(chunks)}')
-        vector = get_embedding(line.encode(encoding='utf-8').decode())
-        database = {'content': line, 'vector': vector}
-        embeddings.append(database)
+    if not os.path.exists(file_path):
+        print(f"Error: Input file '{document_to_embed}' not found.")
+        return
 
+    chunks = split_text_file(file_path)
+    
+    retriever = AsyncEmbeddingRetriever()
+    embeddings = await retriever.get_embeddings(chunks)
+
+    result = []
+    for chunk, vector in zip(chunks, embeddings):
+        if vector is not None:
+            result.append({'content': chunk, 'vector': vector})
+        else:
+            print(f"Failed to get embedding for chunk: {chunk[:50]}...")
 
     output_filename = os.path.splitext(document_to_embed)[0]
-    output_path = f"{output_filename}.json"
+    writable_dir = get_writable_directory()
+    output_path = os.path.join(writable_dir, f"{output_filename}.json")
 
-    with open(output_path, 'w', encoding='utf-8') as outfile:
-        json.dump(embeddings, outfile, indent=2, ensure_ascii=False)
+    try:
+        with open(output_path, 'w', encoding='utf-8') as outfile:
+            json.dump(result, outfile, indent=2, ensure_ascii=False)
+        print(f"Finished vectorizing. Created {output_path}")
+    except PermissionError:
+        print(f"Error: Unable to write to {output_path}. Please check your permissions.")
+    except Exception as e:
+        print(f"An unexpected error occurred while writing the output: {str(e)}")
 
-    print(f"Finished vectorizing. Created {document_to_embed}")
+async def main():
+    document_to_embed = "revit_export.txt"
+    await embed_document(document_to_embed)
 
-
-txt_directory = get_safe_file_path(get_script_directory(), "revit_export.txt")
-embed_document("revit_export.txt")
+if __name__ == "__main__":
+    asyncio.run(main())
