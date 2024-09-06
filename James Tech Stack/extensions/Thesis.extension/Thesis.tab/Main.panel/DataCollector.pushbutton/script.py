@@ -100,54 +100,50 @@ export_revit_to_text(__revit__.ActiveUIDocument.Document)
 
 
 class AsyncEmbeddingRetriever:
-    def __init__(self, url: str = "http://localhost:1234/v1/embeddings"):
+    def __init__(self, url: str = "http://localhost:1234/v1/embeddings", batch_size: int = 10):
         self.url = url
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": "Bearer not-needed"
         }
         self.model = "nomic-ai/nomic-embed-text-v1.5-GGUF/nomic-embed-text-v1.5.Q4_K_M.gguf"
+        self.batch_size = batch_size
 
-    async def get_embedding(self, session: aiohttp.ClientSession, text: str) -> Optional[List[float]]:
+    async def get_embeddings_batch(self, session: aiohttp.ClientSession, texts: List[str]) -> List[Optional[List[float]]]:
         data = {
-            "input": text,
+            "input": texts,
             "model": self.model
         }
 
         try:
             async with session.post(self.url, headers=self.headers, json=data) as response:
                 response_text = await response.text()
-                # print("Raw response from server:")
-                # print(response_text)
 
                 if response.status != 200:
                     print(f"Error occurred while calling the API. Status: {response.status}")
-                    return None
+                    return [None] * len(texts)
 
                 response_json = json.loads(response_text)
                 if 'error' in response_json:
                     print("Server returned an error:")
                     print(json.dumps(response_json['error'], indent=2))
-                    return None
+                    return [None] * len(texts)
 
-                embedding = response_json['data'][0]['embedding']
-                return embedding
+                embeddings = [item['embedding'] for item in response_json['data']]
+                return embeddings
 
-        except aiohttp.ClientError as e:
+        except Exception as e:
             print(f"Error occurred while calling the API: {e}")
-        except json.JSONDecodeError as e:
-            print(f"Error decoding JSON response: {e}")
-            print("Raw response:", response_text)
-        except KeyError as e:
-            print(f"Unexpected response format: {e}")
-            print("Response structure:", json.dumps(response_json, indent=2))
-        
-        return None
+            return [None] * len(texts)
 
     async def get_embeddings(self, texts: List[str]) -> List[Optional[List[float]]]:
         async with aiohttp.ClientSession() as session:
-            tasks = [self.get_embedding(session, text) for text in texts]
-            return await asyncio.gather(*tasks)
+            batches = [texts[i:i + self.batch_size] for i in range(0, len(texts), self.batch_size)]
+            results = []
+            for batch in batches:
+                batch_results = await self.get_embeddings_batch(session, batch)
+                results.extend(batch_results)
+            return results
 
 def split_text_file(file_path):
     chunks = []
@@ -192,7 +188,7 @@ async def embed_document(document_to_embed):
 
     chunks = split_text_file(file_path)
     
-    retriever = AsyncEmbeddingRetriever()
+    retriever = AsyncEmbeddingRetriever(batch_size=100)  # Adjust batch_size as needed
     embeddings = await retriever.get_embeddings(chunks)
 
     result = []
