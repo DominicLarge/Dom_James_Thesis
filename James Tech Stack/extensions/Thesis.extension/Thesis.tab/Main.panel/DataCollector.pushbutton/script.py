@@ -1,5 +1,10 @@
 # !python3
 
+"""
+IMPORTS
+------------------------------------------------------------------------------------
+"""
+
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.UI import *
 
@@ -14,10 +19,23 @@ import multiprocessing
 from functools import partial
 import concurrent.futures
 import time
+import numpy as np
+
+
+"""
+GLOBAL VARIABLES
+------------------------------------------------------------------------------------
+"""
 
 doc = __revit__.ActiveUIDocument.Document
 uidoc = __revit__.ActiveUIDocument
 app = __revit__.Application
+
+
+"""
+EXPORT REVIT TO TXT FILE
+------------------------------------------------------------------------------------
+"""
 
 def parameter_to_string(param):
     """Convert a parameter to a string representation."""
@@ -101,7 +119,10 @@ class RevitTextExporter(IExternalCommand):
 export_revit_to_text(__revit__.ActiveUIDocument.Document)
 
 
-
+"""
+GET LLM EMBEDDINGS FOR REVIT TXT FILE WITH CACHEING SYSTEM
+------------------------------------------------------------------------------------
+"""
 
 class EmbeddingCache:
     def __init__(self, cache_name: str = "embedding_cache"):
@@ -161,7 +182,7 @@ class AsyncEmbeddingRetriever:
             "Content-Type": "application/json",
             "Authorization": "Bearer not-needed"
         }
-        self.model = "nomic-ai/nomic-embed-text-v1.5-GGUF/nomic-embed-text-v1.5.Q4_K_M.gguf"
+        self.model = "second-state/All-MiniLM-L6-v2-Embedding-GGUF/all-MiniLM-L6-v2-Q4_0.gguf"
         self.batch_size = batch_size
         self.cache = EmbeddingCache("revit_embedding_cache")
 
@@ -230,7 +251,27 @@ class AsyncEmbeddingRetriever:
 
 def process_chunk(chunk: str) -> str:
     """Process a single chunk of text."""
-    return chunk.strip()
+    return chunk.strip().replace('\n', ' ')
+
+
+def split_text_file(file_path: str) -> List[str]:
+    chunks = []
+    current_chunk = []
+
+    with open(file_path, 'r') as file:
+        for line in file:
+            if line.strip() == '-' * 50:  # Check for separator line
+                if current_chunk:  # If we have a non-empty chunk
+                    chunks.append(' '.join(current_chunk).strip())
+                    current_chunk = []
+            else:
+                current_chunk.append(line.strip())
+
+    # Add the last chunk if it's not empty
+    if current_chunk:
+        chunks.append(' '.join(current_chunk).strip())
+
+    return chunks
 
 
 def parallel_process_chunks(chunks: List[str], max_workers: int = None) -> List[str]:
@@ -250,26 +291,6 @@ def parallel_process_chunks(chunks: List[str], max_workers: int = None) -> List[
                 print(f'Generated an exception: {exc}')
 
     return processed_chunks
-
-
-def split_text_file(file_path: str) -> List[str]:
-    chunks = []
-    current_chunk = []
-
-    with open(file_path, 'r') as file:
-        for line in file:
-            if line.strip() == '-' * 50:  # Check for separator line
-                if current_chunk:  # If we have a non-empty chunk
-                    chunks.append('\n'.join(current_chunk).strip())
-                    current_chunk = []
-            else:
-                current_chunk.append(line.strip())
-
-    # Add the last chunk if it's not empty
-    if current_chunk:
-        chunks.append('\n'.join(current_chunk).strip())
-
-    return chunks
 
 
 def get_writable_directory():
@@ -295,7 +316,7 @@ async def embed_document(document_to_embed: str):
     print(f"Processed {len(processed_chunks)} chunks.")
 
     print("Getting embeddings...")
-    retriever = AsyncEmbeddingRetriever(batch_size=10)
+    retriever = AsyncEmbeddingRetriever(batch_size=100)
     print(f"Cache file is located at: {retriever.cache.get_cache_file_path()}")
     
     start_time = time.time()
