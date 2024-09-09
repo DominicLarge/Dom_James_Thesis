@@ -3,9 +3,6 @@
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.UI import *
 
-import clr
-clr.AddReference('System.Core')
-
 import json
 import os
 import tempfile
@@ -15,18 +12,12 @@ import aiohttp
 import asyncio
 import multiprocessing
 from functools import partial
-from concurrent.futures import ProcessPoolExecutor
+import concurrent.futures
 import time
-import aiofiles
-import System
-from System.Collections.Concurrent import ConcurrentDictionary
 
 doc = __revit__.ActiveUIDocument.Document
 uidoc = __revit__.ActiveUIDocument
 app = __revit__.Application
-
-from pyrevit import revit, DB
-from pyrevit import script
 
 def parameter_to_string(param):
     """Convert a parameter to a string representation."""
@@ -112,111 +103,238 @@ export_revit_to_text(__revit__.ActiveUIDocument.Document)
 
 
 
-class RevitCompatibleEmbeddingCache:
+class EmbeddingCache:
     def __init__(self, cache_name: str = "embedding_cache"):
-        self.cache_file = f"{cache_name}.json"
-        self.cache = ConcurrentDictionary[str, List[float]]()
-        self.load_cache()
+        self.cache_dir = os.path.dirname(os.path.abspath(__file__))  # Changed to script directory
+        self.cache_file = os.path.join(self.cache_dir, f"{cache_name}.json")
+        self.cache = self.load_cache()
+        print(f"Cache file location: {self.cache_file}")
 
-    def load_cache(self):
-        try:
-            with open(self.cache_file, 'r') as f:
-                cache_data = json.load(f)
-                for key, value in cache_data.items():
-                    self.cache[key] = value
-        except (FileNotFoundError, json.JSONDecodeError):
-            pass
+    def load_cache(self) -> Dict[str, List[float]]:
+        if os.path.exists(self.cache_file):
+            try:
+                with open(self.cache_file, 'r') as f:
+                    cache_data = json.load(f)
+                print(f"Loaded existing cache from {self.cache_file}")
+                print(f"Cache contains {len(cache_data)} entries")
+                return cache_data
+            except json.JSONDecodeError:
+                print(f"Error reading cache file. Starting with an empty cache.")
+                return {}
+        else:
+            print(f"No existing cache found. Starting with an empty cache.")
+        return {}
 
     def save_cache(self):
-        with open(self.cache_file, 'w') as f:
-            json.dump({k: list(v) for k, v in self.cache.items()}, f)
+        try:
+            with open(self.cache_file, 'w') as f:
+                json.dump(self.cache, f)
+            print(f"Cache saved to {self.cache_file}")
+            print(f"Cache now contains {len(self.cache)} entries")
+        except Exception as e:
+            print(f"Error saving cache: {str(e)}")
 
     def get(self, text: str) -> Optional[List[float]]:
-        value = self.cache.get(text)
-        return list(value) if value else None
+        result = self.cache.get(self.hash_text(text))
+        if result:
+            print(f"Cache hit for text: {text[:50]}...")
+        else:
+            print(f"Cache miss for text: {text[:50]}...")
+        return result
 
     def set(self, text: str, embedding: List[float]):
-        self.cache[text] = System.Array[float](embedding)
+        self.cache[self.hash_text(text)] = embedding
+        print(f"Added new entry to cache for text: {text[:50]}...")
 
-class RevitCompatibleEmbeddingRetriever:
-    def __init__(self, url: str = "http://localhost:1234/v1/embeddings", batch_size: int = 50):
+    @staticmethod
+    def hash_text(text: str) -> str:
+        return hashlib.md5(text.encode()).hexdigest()
+
+    def get_cache_file_path(self):
+        return self.cache_file
+    
+
+class AsyncEmbeddingRetriever:
+    def __init__(self, url: str = "http://localhost:1234/v1/embeddings", batch_size: int = 100):
         self.url = url
-        self.headers = {"Content-Type": "application/json", "Authorization": "Bearer not-needed"}
+        self.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer not-needed"
+        }
         self.model = "nomic-ai/nomic-embed-text-v1.5-GGUF/nomic-embed-text-v1.5.Q4_K_M.gguf"
         self.batch_size = batch_size
-        self.cache = RevitCompatibleEmbeddingCache("revit_embedding_cache")
+        self.cache = EmbeddingCache("revit_embedding_cache")
 
-    def get_embeddings(self, texts: List[str]) -> List[Optional[List[float]]]:
+    async def check_cache(self, text: str) -> Optional[List[float]]:
+        return self.cache.get(text)
+
+    async def check_cache_batch(self, texts: List[str]) -> Dict[int, Optional[List[float]]]:
+        tasks = [self.check_cache(text) for text in texts]
+        results = await asyncio.gather(*tasks)
+        return {i: result for i, result in enumerate(results) if result is not None}
+
+    async def get_embeddings_batch(self, session: aiohttp.ClientSession, texts: List[str]) -> List[Optional[List[float]]]:
+        cached_results = await self.check_cache_batch(texts)
+        
         results = [None] * len(texts)
         uncached_texts = []
         uncached_indices = []
 
         for i, text in enumerate(texts):
-            cached_embedding = self.cache.get(text)
-            if cached_embedding:
-                results[i] = cached_embedding
+            if i in cached_results:
+                results[i] = cached_results[i]
             else:
                 uncached_texts.append(text)
                 uncached_indices.append(i)
 
         if uncached_texts:
-            # Here you would normally make an API call to get embeddings
-            # For now, we'll just use dummy embeddings
-            dummy_embeddings = [[0.1, 0.2, 0.3] for _ in uncached_texts]
-            
-            for embedding, index, text in zip(dummy_embeddings, uncached_indices, uncached_texts):
-                if embedding:
-                    self.cache.set(text, embedding)
-                    results[index] = embedding
+            data = {
+                "input": uncached_texts,
+                "model": self.model
+            }
 
-        self.cache.save_cache()
+            try:
+                async with session.post(self.url, headers=self.headers, json=data) as response:
+                    response_text = await response.text()
+
+                    if response.status != 200:
+                        print(f"Error occurred while calling the API. Status: {response.status}")
+                        return results
+
+                    response_json = json.loads(response_text)
+                    if 'error' in response_json:
+                        print("Server returned an error:")
+                        print(json.dumps(response_json['error'], indent=2))
+                        return results
+
+                    embeddings = [item['embedding'] for item in response_json['data']]
+                    for text, embedding, index in zip(uncached_texts, embeddings, uncached_indices):
+                        self.cache.set(text, embedding)
+                        results[index] = embedding
+
+            except Exception as e:
+                print(f"Error occurred while calling the API: {e}")
+
         return results
 
-def process_chunks(chunks: List[str]) -> List[str]:
-    return [chunk.strip() for chunk in chunks if chunk.strip()]
+    async def get_embeddings(self, texts: List[str]) -> List[Optional[List[float]]]:
+        async with aiohttp.ClientSession() as session:
+            batches = [texts[i:i + self.batch_size] for i in range(0, len(texts), self.batch_size)]
+            results = []
+            for batch in batches:
+                batch_results = await self.get_embeddings_batch(session, batch)
+                results.extend(batch_results)
+            return results
 
-def embed_document(document_to_embed: str):
-    # Try to find the file in different locations
-    possible_paths = [
-        document_to_embed,
-        os.path.join(os.path.dirname(__file__), document_to_embed),
-        os.path.join(os.path.expanduser("~"), document_to_embed),
-        os.path.join(os.getcwd(), document_to_embed)
-    ]
 
-    file_path = next((path for path in possible_paths if os.path.exists(path)), None)
 
-    if not file_path:
-        raise FileNotFoundError(f"Could not find {document_to_embed} in any expected locations")
+def process_chunk(chunk: str) -> str:
+    """Process a single chunk of text."""
+    return chunk.strip()
 
-    print(f"Reading file from: {file_path}")
 
-    with open(file_path, mode='r') as f:
-        content = f.read()
+def parallel_process_chunks(chunks: List[str], max_workers: int = None) -> List[str]:
+    """Use threading to process chunks in parallel."""
+    if max_workers is None:
+        max_workers = min(32, (os.cpu_count() or 1) + 4)  # This is ThreadPoolExecutor's default
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_chunk = {executor.submit(process_chunk, chunk): chunk for chunk in chunks}
+        processed_chunks = []
+        for future in concurrent.futures.as_completed(future_to_chunk):
+            try:
+                result = future.result()
+                if result:  # Only add non-empty results
+                    processed_chunks.append(result)
+            except Exception as exc:
+                print(f'Generated an exception: {exc}')
+
+    return processed_chunks
+
+
+def split_text_file(file_path: str) -> List[str]:
+    chunks = []
+    current_chunk = []
+
+    with open(file_path, 'r') as file:
+        for line in file:
+            if line.strip() == '-' * 50:  # Check for separator line
+                if current_chunk:  # If we have a non-empty chunk
+                    chunks.append('\n'.join(current_chunk).strip())
+                    current_chunk = []
+            else:
+                current_chunk.append(line.strip())
+
+    # Add the last chunk if it's not empty
+    if current_chunk:
+        chunks.append('\n'.join(current_chunk).strip())
+
+    return chunks
+
+
+def get_writable_directory():
+    """
+    Use the script's directory as the writable directory.
+    """
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+async def embed_document(document_to_embed: str):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_dir, document_to_embed)
+
+    if not os.path.exists(file_path):
+        print(f"Error: Input file '{document_to_embed}' not found.")
+        return
+
+    print("Reading and splitting the file...")
+    chunks = split_text_file(file_path)
     
-    chunks = content.split('-' * 50)
-    processed_chunks = process_chunks(chunks)
+    print("Processing chunks in parallel...")
+    processed_chunks = parallel_process_chunks(chunks)
+    print(f"Processed {len(processed_chunks)} chunks.")
+
+    print("Getting embeddings...")
+    retriever = AsyncEmbeddingRetriever(batch_size=10)
+    print(f"Cache file is located at: {retriever.cache.get_cache_file_path()}")
     
-    retriever = RevitCompatibleEmbeddingRetriever(batch_size=50)
-    embeddings = retriever.get_embeddings(processed_chunks)
-
-    result = [{'content': chunk, 'vector': vector} for chunk, vector in zip(processed_chunks, embeddings) if vector is not None]
-
-    output_file = os.path.splitext(file_path)[0] + "_embedded.json"
-    with open(output_file, 'w') as outfile:
-        json.dump(result, outfile, indent=2)
+    start_time = time.time()
+    embeddings = await retriever.get_embeddings(processed_chunks)
+    end_time = time.time()
     
-    print(f"Embedded document saved to: {output_file}")
+    print(f"Embedding retrieval took {end_time - start_time:.2f} seconds")
+    print(f"Retrieved {len(embeddings)} embeddings")
 
-def script_execute():
-    document_to_embed = "revit_export.txt"
+    result = []
+    for chunk, vector in zip(processed_chunks, embeddings):
+        if vector is not None:
+            result.append({'content': chunk, 'vector': vector})
+        else:
+            print(f"Failed to get embedding for chunk: {chunk[:50]}...")
+
+    output_filename = os.path.splitext(document_to_embed)[0]
+    writable_dir = get_writable_directory()  # Use script directory for output
+    output_path = os.path.join(writable_dir, f"{output_filename}.json")
+
     try:
-        embed_document(document_to_embed)
-    except FileNotFoundError as e:
-        print(f"Error: {e}")
-        print("Please ensure the file exists and you have the correct path.")
+        with open(output_path, 'w', encoding='utf-8') as outfile:
+            json.dump(result, outfile, indent=2, ensure_ascii=False)
+        print(f"Finished vectorizing. Created {output_path}")
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        script.get_logger().error(str(e))
+        print(f"An unexpected error occurred while writing the output: {str(e)}")
 
-script_execute()
+    # Save the cache after processing
+    retriever.cache.save_cache()
+
+
+
+async def main():
+    document_to_embed = "revit_export.txt"
+    start_time = time.time()
+    await embed_document(document_to_embed)
+    end_time = time.time()
+    print(f"Total processing time: {end_time - start_time:.2f} seconds")
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()  # For Windows support
+    asyncio.run(main())
