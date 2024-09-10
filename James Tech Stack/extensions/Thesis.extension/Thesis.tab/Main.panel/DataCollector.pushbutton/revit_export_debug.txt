@@ -1,0 +1,98 @@
+Debug info for element 857191:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857194:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857197:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857200:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857203:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857206:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857209:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857279:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857292:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857346:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857545:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 857552:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 906922:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
+Debug info for element 940325:
+Traceback (most recent call last):
+  File "<string>", line 221, in export_revit_to_text
+  File "<string>", line 127, in element_to_string
+TypeError: property cannot be read
+
+
