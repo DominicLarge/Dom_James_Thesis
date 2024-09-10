@@ -695,19 +695,6 @@ def rag_query(query, chunks, embeddings):
             "ParameterName2": "Value2_units"
         }}
     }}
-    ,
-    {{
-        "Command": "command_here",
-        "ID": "id_here",
-        "ElementType": "elementtype_here",
-        "Family": "element_family_here",
-        "Type": "type_here",
-        "TypeID": "type_id_here",        
-        "Parameters": {{
-            "ParameterName1": "Value1_units",
-            "ParameterName2": "Value2_units"
-        }}
-    }}
 
     IMPORTANT:
 
