@@ -7,26 +7,25 @@ IMPORTS
 
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.UI import *
-from Autodesk.Revit.DB import UnitUtils, UnitTypeId, StorageType, ForgeTypeId, SpecTypeId
+from Autodesk.Revit.DB import UnitUtils, UnitTypeId, StorageType, SpecTypeId
 
 import traceback
 import json
 import os
-import tempfile
 import hashlib
 from typing import Dict, List, Optional
 import aiohttp
 import asyncio
-import multiprocessing
-from functools import partial
 import concurrent.futures
 import time
 import numpy as np
 import requests
 from sklearn.metrics.pairwise import cosine_similarity
-import sys
-import ast
 import re
+
+
+
+
 
 
 """
@@ -37,6 +36,11 @@ GLOBAL VARIABLES
 doc = __revit__.ActiveUIDocument.Document
 uidoc = __revit__.ActiveUIDocument
 app = __revit__.Application
+
+
+
+
+
 
 
 """
@@ -81,7 +85,9 @@ model_categories = [
     BuiltInCategory.OST_StructuralStiffener,
     BuiltInCategory.OST_StructuralTruss,
     BuiltInCategory.OST_Assemblies,
-    BuiltInCategory.OST_CurtaSystem
+    BuiltInCategory.OST_CurtaSystem,
+    BuiltInCategory.OST_Sheets,
+    BuiltInCategory.OST_Levels
 ]
     
 
@@ -119,66 +125,69 @@ def parameter_to_string(param):
         return "Unsupported Type"
 
 
+def safe_get_property(obj, prop_name, default="N/A"):
+    try:
+        value = getattr(obj, prop_name, default)
+        return value if value is not None else default
+    except Exception:
+        return default
 
-def element_to_string(element, doc):
-    """Convert an element to a string representation, including type parameters."""
-    lines = [
-        f"ID: {element.Id.IntegerValue}",
-        f"Name: {element.Name}",
-        f"Category: {element.Category.Name if element.Category else 'Uncategorized'}"
-    ]
+
+
+
+def element_to_dict(element, doc):
+    """Convert an element to a dictionary representation, including type parameters."""
+    element_dict = {
+        "ID": element.Id.IntegerValue,
+        "Name": safe_get_property(element, 'Name'),
+        "Category": safe_get_property(element.Category, 'Name') if element.Category else 'Uncategorized',
+        "Instance_Parameters": {},
+        "Type_Parameters": {}
+    }
     
     # Add element parameters
-    lines.append("Instance Parameters:")
     for param in element.Parameters:
-        lines.append(f"  {param.Definition.Name}: {parameter_to_string(param)}")
+        try:
+            element_dict["Instance_Parameters"][param.Definition.Name] = parameter_to_string(param)
+        except Exception:
+            continue
     
     # Add type parameters
     element_type = doc.GetElement(element.GetTypeId())
     if element_type:
-        lines.append("\nType Parameters:")
         for param in element_type.Parameters:
-            lines.append(f"  {param.Definition.Name}: {parameter_to_string(param)}")
-    
-    return "\n".join(lines)
-
-
-
-def type_to_string(element_type):
-    """Convert an element type to a string representation with detailed error handling."""
-    lines = []
-    try:
-        # Basic properties
-        properties = [
-            ("Type ID", lambda: str(element_type.Id.IntegerValue)),
-            ("Type Name", lambda: element_type.Name),
-            ("Family Name", lambda: getattr(element_type, 'FamilyName', 'N/A')),
-            ("Category", lambda: element_type.Category.Name if element_type.Category else 'Uncategorized')
-        ]
-        
-        for prop_name, prop_func in properties:
             try:
-                value = prop_func()
-                lines.append(f"{prop_name}: {value}")
-            except Exception as e:
-                lines.append(f"Error reading {prop_name}: {str(e)}")
-                print(f"Debug: Error reading {prop_name} for element type {element_type.Id.IntegerValue}: {str(e)}")
+                element_dict["Type_Parameters"][param.Definition.Name] = parameter_to_string(param)
+            except Exception:
+                continue
+    
+    return element_dict
+
+
+
+def type_to_dict(element_type):
+    """Convert an element type to a dictionary representation."""
+    try:
+        type_dict = {
+            "Type_ID": element_type.Id.IntegerValue,
+            "Type_Name": safe_get_property(element_type, 'Name'),
+            "Family_Name": safe_get_property(element_type, 'FamilyName'),
+            "Category": safe_get_property(element_type.Category, 'Name') if element_type.Category else 'Uncategorized',
+            "Parameters": {}
+        }
         
         # Parameters
-        lines.append("Type Parameters:")
         for param in element_type.Parameters:
             try:
-                param_value = parameter_to_string(param)
-                lines.append(f"  {param.Definition.Name}: {param_value}")
+                type_dict["Parameters"][param.Definition.Name] = parameter_to_string(param)
             except Exception as e:
-                lines.append(f"  Error reading parameter {param.Definition.Name}: {str(e)}")
-                print(f"Debug: Error reading parameter {param.Definition.Name} for element type {element_type.Id.IntegerValue}: {str(e)}")
+                print(f"Error reading parameter {param.Definition.Name}: {str(e)}")
+                continue
         
-        return "\n".join(lines)
+        return type_dict
     except Exception as e:
-        error_msg = f"Error processing element type {element_type.Id.IntegerValue}: {str(e)}\n{traceback.format_exc()}"
-        print(f"Debug: {error_msg}")
-        return error_msg
+        print(f"Error processing element type {element_type.Id.IntegerValue}: {str(e)}")
+        return None
 
 
 
@@ -186,71 +195,50 @@ def get_script_directory():
     """Get the directory of the current script."""
     return os.path.dirname(os.path.realpath(__file__))
 
-def get_safe_file_path(directory, base_name='revit_export'):
+def get_safe_file_path(directory, base_name='revit_export', extension='.json'):
     """Generate a safe file path in the specified directory."""
-    file_name = f"{base_name}.txt"
+    file_name = f"{base_name}{extension}"
     return os.path.join(directory, file_name)
 
 
-def export_revit_to_text(doc):
+
+def export_revit_to_json(doc):
     export_dir = get_script_directory()
-    output_file = get_safe_file_path(export_dir)
-    error_log_file = get_safe_file_path(export_dir, 'revit_export_errors')
-    debug_log_file = get_safe_file_path(export_dir, 'revit_export_debug')
-
+    output_file = get_safe_file_path(export_dir, 'revit_export', '.json')
+    
     try:
-
-        # Collect all model elements
         all_elements = FilteredElementCollector(doc).WhereElementIsNotElementType().ToElements()
         model_elements = [elem for elem in all_elements if is_model_element(elem)]
 
-        # Collect all element types
         all_types = FilteredElementCollector(doc).WhereElementIsElementType().ToElements()
         filtered_types = [elem_type for elem_type in all_types if is_type_of_model_element(elem_type)]
         
-        with open(output_file, 'w', encoding='utf-8') as f, \
-             open(error_log_file, 'w', encoding='utf-8') as error_f, \
-             open(debug_log_file, 'w', encoding='utf-8') as debug_f:
-            
-
-            # Write model elements
-            f.write("MODEL ELEMENTS:\n")
-            f.write("=" * 50 + "\n\n")
-            for element in model_elements:
-                try:
-                    element_string = element_to_string(element, doc)
-                    f.write(element_string + "\n\n" + "-"*50 + "\n\n")
-                except Exception as e:
-                    error_message = f"Error processing element {element.Id.IntegerValue}: {str(e)}"
-                    print(error_message)
-                    error_f.write(error_message + "\n")
-                    debug_f.write(f"Debug info for element {element.Id.IntegerValue}:\n")
-                    debug_f.write(traceback.format_exc() + "\n\n")
-
-            # Write element types
-            f.write("\n\nFILTERED ELEMENT TYPES:\n")
-            f.write("=" * 50 + "\n\n")
-            for element_type in filtered_types:
-                try:
-                    type_string = type_to_string(element_type)
-                    f.write(type_string + "\n\n" + "-"*50 + "\n\n")
-                except Exception as e:
-                    error_message = f"Error processing element type {element_type.Id.IntegerValue}: {str(e)}"
-                    print(error_message)
-                    error_f.write(error_message + "\n")
-                    debug_f.write(f"Debug info for element type {element_type.Id.IntegerValue}:\n")
-                    debug_f.write(traceback.format_exc() + "\n\n")
+        export_data = {
+            "MODEL_ELEMENTS": [element_to_dict(element, doc) for element in model_elements if element_to_dict(element, doc) is not None],
+            "ELEMENT_TYPES": [type_to_dict(element_type) for element_type in filtered_types if type_to_dict(element_type) is not None]
+        }
         
-        print(f"Export completed. File saved at: {output_file}")
-        print(f"Error log saved at: {error_log_file}")
-        print(f"Debug log saved at: {debug_log_file}")
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(export_data, f, indent=2, ensure_ascii=False)
+        
+        print(f"Export completed. JSON file saved at: {output_file}")
+        return output_file
     
     except Exception as e:
-        error_message = f"Error writing to file: {str(e)}\nPlease check your permissions and try again."
+        error_message = f"Error during export: {str(e)}\n"
+        error_message += f"Traceback: {traceback.format_exc()}"
         print(error_message)
+        return None
 
-# If running in Revit Python Shell, you can use this:
-export_revit_to_text(__revit__.ActiveUIDocument.Document)
+
+
+
+
+
+
+
+
+
 
 
 """
@@ -450,6 +438,54 @@ def get_writable_directory():
     return os.path.dirname(os.path.abspath(__file__))
 
 
+def process_json_for_embedding(file_path: str) -> List[Dict[str, str]]:
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+    except json.JSONDecodeError:
+        print(f"Error: The file at {file_path} is not a valid JSON file.")
+        return []
+    except FileNotFoundError:
+        print(f"Error: The file at {file_path} was not found.")
+        return []
+    
+    chunks = []
+    
+    # Process MODEL_ELEMENTS
+    model_elements = data.get("MODEL_ELEMENTS", [])
+    if isinstance(model_elements, list):
+        for element in model_elements:
+            chunk = f"Element ID: {element.get('ID', 'N/A')}\n"
+            chunk += f"Name: {element.get('Name', 'N/A')}\n"
+            chunk += f"Category: {element.get('Category', 'N/A')}\n"
+            chunk += "Instance Parameters:\n"
+            for name, value in element.get('Instance_Parameters', {}).items():
+                chunk += f"  {name}: {value}\n"
+            chunk += "Type Parameters:\n"
+            for name, value in element.get('Type_Parameters', {}).items():
+                chunk += f"  {name}: {value}\n"
+            chunks.append({"content": chunk.strip(), "metadata": {"type": "MODEL_ELEMENT", "id": element.get('ID', 'N/A')}})
+    else:
+        print("Warning: MODEL_ELEMENTS is not a list as expected.")
+    
+    # Process ELEMENT_TYPES
+    element_types = data.get("ELEMENT_TYPES", [])
+    if isinstance(element_types, list):
+        for elem_type in element_types:
+            chunk = f"Type ID: {elem_type.get('Type_ID', 'N/A')}\n"
+            chunk += f"Type Name: {elem_type.get('Type_Name', 'N/A')}\n"
+            chunk += f"Family Name: {elem_type.get('Family_Name', 'N/A')}\n"
+            chunk += f"Category: {elem_type.get('Category', 'N/A')}\n"
+            chunk += "Parameters:\n"
+            for name, value in elem_type.get('Parameters', {}).items():
+                chunk += f"  {name}: {value}\n"
+            chunks.append({"content": chunk.strip(), "metadata": {"type": "ELEMENT_TYPE", "id": elem_type.get('Type_ID', 'N/A')}})
+    else:
+        print("Warning: ELEMENT_TYPES is not a list as expected.")
+    
+    return chunks
+
+
 async def embed_document(document_to_embed: str):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(current_dir, document_to_embed)
@@ -458,34 +494,30 @@ async def embed_document(document_to_embed: str):
         print(f"Error: Input file '{document_to_embed}' not found.")
         return
 
-    print("Reading and splitting the file...")
-    chunks = split_text_file(file_path)
-    
-    print("Processing chunks in parallel...")
-    processed_chunks = parallel_process_chunks(chunks)
-    print(f"Processed {len(processed_chunks)} chunks.")
+    print("Processing JSON file...")
+    chunks = process_json_for_embedding(file_path)
+    print(f"Processed {len(chunks)} chunks.")
 
     print("Getting embeddings...")
     retriever = AsyncEmbeddingRetriever(batch_size=100)
-    print(f"Cache file is located at: {retriever.cache.get_cache_file_path()}")
     
     start_time = time.time()
-    embeddings = await retriever.get_embeddings(processed_chunks)
+    embeddings = await retriever.get_embeddings([chunk['content'] for chunk in chunks])
     end_time = time.time()
     
     print(f"Embedding retrieval took {end_time - start_time:.2f} seconds")
     print(f"Retrieved {len(embeddings)} embeddings")
 
     result = []
-    for chunk, vector in zip(processed_chunks, embeddings):
+    for chunk, vector in zip(chunks, embeddings):
         if vector is not None:
-            result.append({'content': chunk, 'vector': vector})
+            result.append({'content': chunk['content'], 'vector': vector, 'metadata': chunk['metadata']})
         else:
-            print(f"Failed to get embedding for chunk: {chunk[:50]}...")
+            print(f"Failed to get embedding for chunk: {chunk['content'][:50]}...")
 
     output_filename = os.path.splitext(document_to_embed)[0]
-    writable_dir = get_writable_directory()  # Use script directory for output
-    output_path = os.path.join(writable_dir, f"{output_filename}.json")
+    writable_dir = get_writable_directory()
+    output_path = os.path.join(writable_dir, f"{output_filename}_embedded.json")
 
     try:
         with open(output_path, 'w', encoding='utf-8') as outfile:
@@ -499,16 +531,39 @@ async def embed_document(document_to_embed: str):
 
 
 
+
 async def main():
-    document_to_embed = "revit_export.txt"
-    start_time = time.time()
-    await embed_document(document_to_embed)
-    end_time = time.time()
-    print(f"Total processing time: {end_time - start_time:.2f} seconds")
+    try:
+        # First, export Revit data to JSON
+        output_file = export_revit_to_json(__revit__.ActiveUIDocument.Document)
+        
+        if output_file is None or not os.path.exists(output_file):
+            print("Failed to export Revit data or create JSON file. Aborting embedding process.")
+            return
+        
+        # Then, process and embed the JSON file
+        start_time = time.time()
+        await embed_document(output_file)
+        end_time = time.time()
+        print(f"Total processing time: {end_time - start_time:.2f} seconds")
+    except Exception as e:
+        print(f"An error occurred in the main function: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
 
 if __name__ == "__main__":
-    multiprocessing.freeze_support()  # For Windows support
     asyncio.run(main())
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 """
@@ -516,8 +571,9 @@ QUERY LLM WITH RAG
 ------------------------------------------------------------------------------------
 """
 
-def find_json_file(filename='revit_export.json'):
-    """Find the JSON file in the script's directory or its parent directories."""
+
+def find_json_file(filename='revit_export_embedded.json'):
+    """Find the JSON file with embedded vectors in the script's directory or its parent directories."""
     current_dir = os.path.dirname(os.path.abspath(__file__))
     while True:
         file_path = os.path.join(current_dir, filename)
@@ -525,20 +581,8 @@ def find_json_file(filename='revit_export.json'):
             return file_path
         parent_dir = os.path.dirname(current_dir)
         if parent_dir == current_dir:
-            # We've reached the root directory
             return None
         current_dir = parent_dir
-
-# Load the embeddings and text chunks
-try:
-    json_file_path = find_json_file()
-    print(f"Loading data from: {json_file_path}")
-    with open(json_file_path, 'r') as f:
-        data = json.load(f)
-except FileNotFoundError as e:
-    print(f"Error: {e}")
-    print("Please ensure that 'revit_export.json' is in the script's directory or any parent directory.")
-    exit(1)
 
 
 def load_data(json_file_path=None):
@@ -546,21 +590,40 @@ def load_data(json_file_path=None):
         json_file_path = find_json_file()
     
     if json_file_path is None:
-        print("Error: Could not find 'revit_export.json' in the current directory or any parent directory.")
+        print("Error: Could not find 'revit_export_embedded.json' in the current directory or any parent directory.")
         print(f"Current working directory: {os.getcwd()}")
-        print("Please ensure that 'revit_export.json' exists and you have the necessary permissions.")
+        print("Please ensure that 'revit_export_embedded.json' exists and you have the necessary permissions.")
         return None, None
 
     try:
         with open(json_file_path, 'r') as f:
             data = json.load(f)
+        
         chunks = [item['content'] for item in data]
         embeddings = np.array([item['vector'] for item in data])
+        metadata = [item['metadata'] for item in data]
+
         print(f"Successfully loaded data from: {json_file_path}")
-        return chunks, embeddings
+        return chunks, embeddings, metadata
     except Exception as e:
         print(f"Error loading data from {json_file_path}: {str(e)}")
-        return None, None
+        return None, None, None
+
+
+
+def get_embedding(text):
+    API_URL = "http://localhost:1234/v1/embeddings"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer not-needed"
+    }
+    data = {
+        "model": "nomic-ai/nomic-embed-text-v1.5-GGUF",
+        "input": text
+    }
+    response = requests.post(API_URL, headers=headers, json=data)
+    return response.json()['data'][0]['embedding']
+
 
 
 def get_relevant_chunks(query_embedding, embeddings, chunks, top_k=5):
@@ -572,57 +635,13 @@ def get_relevant_chunks(query_embedding, embeddings, chunks, top_k=5):
 def format_context(relevant_chunks, similarities):
     context = "RELEVANT INFORMATION:\n"
     for chunk, similarity in zip(relevant_chunks, similarities):
-        context += f"[Similarity: {similarity:.2f}]\n"
+        chunk_data = json.loads(chunk)  # Assuming chunk is a JSON string
+        element_type = chunk_data.get('ElementType', 'Unknown Type')
+        element_id = chunk_data.get('ID', 'Unknown ID')
         
-        # Split the chunk into lines
-        lines = chunk.split('\n')
-        formatted_lines = []
-
-        for line in lines:
-            # Split the line into key-value pairs
-            pairs = re.findall(r'(\w+(?:\s+\w+)*?):\s*(.*?)(?=\s+\w+(?:\s+\w+)*?:|$)', line)
-            
-            # Format each key-value pair
-            formatted_pairs = [f"{key}: {value}" for key, value in pairs]
-            
-            # Join the formatted pairs with commas
-            formatted_line = ', '.join(formatted_pairs)
-            formatted_lines.append(formatted_line)
-
-        # Join all formatted lines
-        context += '\n'.join(formatted_lines) + "\n" + '='*50 + "\n"
-    
+        context += f"[Similarity: {similarity:.2f}] [Type: {element_type}] [ID: {element_id}]\n"
+        context += chunk + "\n" + '='*50 + "\n"
     return context
-
-
-def query_llm(prompt):
-    """Query the LLM API with the given prompt."""
-    API_URL = "http://localhost:1234/v1/chat/completions"  # Update this with your LLM API endpoint
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer not-needed"
-    }
-    data = {
-        "model": "second-state/all-MiniLM-L6-v2-Embedding-GGUF",  # Update with your model name
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.7
-    }
-    response = requests.post(API_URL, headers=headers, json=data)
-    return response.json()['choices'][0]['message']['content']
-
-
-def get_query_embedding(query):
-    API_URL = "http://localhost:1234/v1/embeddings"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer not-needed"
-    }
-    data = {
-        "model": "nomic-ai/nomic-embed-text-v1.5-GGUF",
-        "input": query
-    }
-    response = requests.post(API_URL, headers=headers, json=data)
-    return response.json()['data'][0]['embedding']
 
 
 def query_llm(prompt):
@@ -632,7 +651,7 @@ def query_llm(prompt):
         "Authorization": "Bearer not-needed"
     }
     data = {
-        "model": "lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "model": "lmstudio-community/Mistral-Nemo-Instruct-2407-GGUF",
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.0
     }
@@ -642,47 +661,99 @@ def query_llm(prompt):
 
 def extract_dictionary(text):
     try:
-        # Find the start and end of the dictionary in the text
         start = text.index('{')
         end = text.rindex('}') + 1
         dict_str = text[start:end]
-        # Parse the dictionary string
-        return eval(dict_str)
+        return json.loads(dict_str)
     except:
         return None
 
 
 def find_element_by_id(chunks, element_type, element_id):
     for chunk in chunks:
-        if f"ID: {element_id}" in chunk and element_type.lower() in chunk.lower():
+        if chunk['type'].lower() == element_type.lower() and chunk['id'] == element_id:
             return chunk
     return None
 
 
+def parse_chunk(chunk):
+    """Parse the chunk string to extract relevant information."""
+    element_type = re.search(r'Category:\s*(\w+)', chunk)
+    element_id = re.search(r'ID:\s*(\d+)', chunk)
+    return {
+        'ElementType': element_type.group(1) if element_type else 'Unknown Type',
+        'ID': element_id.group(1) if element_id else 'Unknown ID'
+    }
 
-def rag_query(query, chunks, embeddings):
-    query_embedding = get_query_embedding(query)
+
+def preprocess_chunks(chunks, metadata):
+    """Preprocess chunks to extract potential identifiers."""
+    processed_chunks = []
+    for chunk, meta in zip(chunks, metadata):
+        chunk_data = parse_chunk(chunk)
+        identifiers = []
+        
+        # Check common identifier parameters
+        for param in ['Mark', 'Family and Type', 'Type Mark', 'Comments', 'Name', 'ID', 'Type ID']:
+            value = (chunk_data.get('Instance_Parameters', {}).get(param) or 
+                     chunk_data.get('Type_Parameters', {}).get(param) or 
+                     chunk_data.get(param))
+            if value and value != 'N/A':
+                identifiers.append(f"{param}: {value}")
+        
+        # Add any other potential identifiers here
+        
+        processed_chunks.append({
+            'content': chunk,
+            'metadata': meta,
+            'identifiers': identifiers
+        })
+    return processed_chunks
+
+
+def find_element_by_identifier(processed_chunks, query):
+    """Find an element based on various potential identifiers."""
+    for chunk in processed_chunks:
+        for identifier in chunk['identifiers']:
+            if identifier.lower() in query.lower():
+                return chunk
+    return None
+
+
+def format_context(relevant_chunks, similarities):
+    context = "RELEVANT INFORMATION:\n"
+    for chunk, similarity in zip(relevant_chunks, similarities):
+        chunk_data = parse_chunk(chunk)
+        element_type = chunk_data['ElementType']
+        element_id = chunk_data['ID']
+        
+        context += f"[Similarity: {similarity:.2f}] [Type: {element_type}] [ID: {element_id}]\n"
+        context += chunk + "\n" + '='*50 + "\n"
+    return context
+
+
+def rag_query(query, processed_chunks, embeddings, top_k=5):
+    query_embedding = get_embedding(query)
     
-    # Extract element type and ID from the query
-    match = re.search(r'(\w+)\s+(\d+)', query)
-    if match:
-        element_type, element_id = match.groups()
-        specific_element = find_element_by_id(chunks, element_type, element_id)
-    else:
-        specific_element = None
+    # Try to find a specific element based on identifiers
+    specific_element = find_element_by_identifier(processed_chunks, query)
     
-    relevant_chunks, similarities = get_relevant_chunks(query_embedding, embeddings, chunks)
+    # Get top-k relevant chunks
+    chunk_contents = [chunk['content'] for chunk in processed_chunks]
+    chunk_embeddings = embeddings
+    relevant_chunks, similarities = get_relevant_chunks(query_embedding, chunk_embeddings, chunk_contents, top_k)
     
-    # If a specific element was found, add it to the relevant chunks
-    if specific_element:
-        relevant_chunks = [specific_element] + [chunk for chunk in relevant_chunks if chunk != specific_element]
-        similarities = [1.0] + similarities[:len(relevant_chunks)-1]  # Assign highest similarity to specific element
+    # If a specific element was found and it's not in the relevant chunks, add it
+    if specific_element and specific_element['content'] not in relevant_chunks:
+        relevant_chunks = [specific_element['content']] + relevant_chunks[:top_k-1]
+        similarities = [1.0] + similarities[:top_k-1]
     
     context = format_context(relevant_chunks, similarities)
 
+    print(f"Number of chunks in context: {len(relevant_chunks)}")
     print("CONTEXT: " + context)
     
-    prompt = f"""Based on the following context and verbal command,  output ONLY a Python dictionary with this exact format:
+    prompt = f"""Based on the following context and verbal command, output ONLY a Python dictionary with this exact format:
     {{
         "Command": "command_here",
         "ID": "id_here",
@@ -693,17 +764,18 @@ def rag_query(query, chunks, embeddings):
         "Parameters": {{
             "ParameterName1": "Value1_units",
             "ParameterName2": "Value2_units"
-        }}
+        }},
+        "Identifiers": ["identifier1", "identifier2"]
     }}
 
     IMPORTANT:
 
     1. Use the exact ID, Type ID, and Parameter names from the context if available.
-    2. Use context provided by the user to determine which elements are being referred to.
-    3. If a specific parameter is mentioned in the command, include it in the Parameters dictionary.
-    4. Only include parameters that are explicitly mentioned in the command or are directly relevant to the command.
+    2. Use any identifiers (such as Mark, Family and Type, Type Mark, etc.) provided in the context to determine which element is being referred to.
+    4. If a parameter value is changed by the command, reflect this in the output.
     5. Do not include any explanatory text. The output should be a valid Python dictionary and nothing else.
-    6. Always include units after a parameter if the user specifies them.
+    6. Always include units after a parameter value if they are provided in the context.
+    7. In the "Identifiers" list, include any identifying information used to select this element.
 
     Context:
     {context}
@@ -716,6 +788,14 @@ def rag_query(query, chunks, embeddings):
     dict_output = extract_dictionary(response)
     
     return dict_output if dict_output else {"Error": "Unable to generate a valid dictionary response"}
+
+
+
+
+
+
+
+
 
 
 """
@@ -783,8 +863,10 @@ def update_parameter(doc, param, param_value):
         print(f"Error updating parameter '{param.Definition.Name}': {str(e)}")
         return False
 
+
 def extract_id(id_string):
     return int(''.join(filter(str.isdigit, id_string)))
+
 
 def update_revit_element(doc, uidoc, llm_output):
     element_id = extract_id(llm_output.get('ID')) if llm_output.get('ID') else None
@@ -822,6 +904,7 @@ def update_revit_element(doc, uidoc, llm_output):
             # If instance parameter not found or update failed, try type parameter
             if not element_type and element:
                 element_type = doc.GetElement(element.GetTypeId())
+                print(element_type)
 
             if element_type:
                 type_param = element_type.LookupParameter(param_name)
@@ -845,9 +928,19 @@ RUN SCRIPT
 ------------------------------------------------------------------------------------
 """
 
-chunks, embeddings = load_data()
-user_query = "Change kitchen room number to be 504"
-result = rag_query(user_query, chunks, embeddings)
-print(result)
+
+user_input = "Change standard window with mark 19 to have a width of 2 feet"
+
+
+# Example usage
+chunks, embeddings, metadata = load_data()
+if chunks is not None and embeddings is not None and metadata is not None:
+    processed_chunks = preprocess_chunks(chunks, metadata)
+    result = rag_query(user_input, processed_chunks, embeddings, top_k=5)
+    print(json.dumps(result, indent=2))
+else:
+    print("Failed to load data. Please check the error messages above.")
+
+
 update_revit_element(doc, uidoc, result)
 
