@@ -793,11 +793,6 @@ def rag_query(query, processed_chunks, embeddings, top_k=5):
 
 
 
-
-
-
-
-
 """
 UPDATE THE REVIT ELEMENTS
 ------------------------------------------------------------------------------------
@@ -920,6 +915,7 @@ def update_revit_element(doc, uidoc, llm_output):
     except Exception as e:
         t.RollBack()
         print(f"Error updating element/type: {str(e)}")
+
 
 
 
