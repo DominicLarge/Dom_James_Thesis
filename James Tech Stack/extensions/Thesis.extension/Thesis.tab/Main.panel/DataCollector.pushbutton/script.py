@@ -776,6 +776,7 @@ def rag_query(query, processed_chunks, embeddings, top_k=5):
     5. Do not include any explanatory text. The output should be a valid Python dictionary and nothing else.
     6. Always include units after a parameter value if they are provided in the context.
     7. In the "Identifiers" list, include any identifying information used to select this element.
+    8. Units should be either feet (ft), Inches (in), Meters (m) or Millimeters (mm)
 
     Context:
     {context}
@@ -860,61 +861,61 @@ def update_parameter(doc, param, param_value):
 
 
 def extract_id(id_string):
-    return int(''.join(filter(str.isdigit, id_string)))
+    if isinstance(id_string, list):
+        return [int(''.join(filter(str.isdigit, str(id)))) for id in id_string]
+    elif isinstance(id_string, str):
+        return [int(''.join(filter(str.isdigit, id))) for id in id_string.split(',')]
+    return [int(''.join(filter(str.isdigit, str(id_string))))]
+
 
 
 def update_revit_element(doc, uidoc, llm_output):
-    element_id = extract_id(llm_output.get('ID')) if llm_output.get('ID') else None
-    type_id = extract_id(llm_output.get('TypeID')) if llm_output.get('TypeID') else None
+    element_ids = extract_id(llm_output.get('ID')) if llm_output.get('ID') else None
+    type_ids = extract_id(llm_output.get('TypeID')) if llm_output.get('TypeID') else None
     parameters_to_update = llm_output.get('Parameters', {})
 
-    if not element_id and not type_id:
+    if not element_ids and not type_ids:
         print("No ElementID or TypeID provided in LLM output.")
         return
 
-    from Autodesk.Revit.DB import ElementId
-    element_id = ElementId(element_id) if element_id is not None else None
-    type_id = ElementId(type_id) if type_id is not None else None
+    from Autodesk.Revit.DB import ElementId, Transaction
 
-    element = doc.GetElement(element_id) if element_id else None
-    element_type = doc.GetElement(type_id) if type_id else None
+    element_ids = [ElementId(id) for id in element_ids]
+    type_ids = [ElementId(id) for id in type_ids] if type_ids else []
 
-    if not element and not element_type:
-        print(f"No element or element type found with provided IDs.")
+    elements = [doc.GetElement(id) for id in element_ids if doc.GetElement(id) is not None]
+    element_types = [doc.GetElement(id) for id in type_ids if doc.GetElement(id) is not None]
+
+    if not elements and not element_types:
+        print(f"No elements or element types found with provided IDs.")
         return
 
     t = Transaction(doc, "Update Element Parameters")
     t.Start()
 
     try:
-        for param_name, param_value in parameters_to_update.items():
-            # Try instance parameter first
-            if element:
-                instance_param = element.LookupParameter(param_name)
-                if instance_param and not instance_param.IsReadOnly:
-                    if update_parameter(doc, instance_param, param_value):
-                        print(f"Updated instance parameter '{param_name}' for element {element_id}")
-                        continue
+        for element in elements:
+            update_element_parameters(doc, element, parameters_to_update)
 
-            # If instance parameter not found or update failed, try type parameter
-            if not element_type and element:
-                element_type = doc.GetElement(element.GetTypeId())
-                print(element_type)
-
-            if element_type:
-                type_param = element_type.LookupParameter(param_name)
-                if type_param and not type_param.IsReadOnly:
-                    if update_parameter(doc, type_param, param_value):
-                        print(f"Updated type parameter '{param_name}' for type {type_id or element_type.Id}")
-                        continue
-
-            print(f"Parameter '{param_name}' not found or could not be updated.")
+        for element_type in element_types:
+            update_element_parameters(doc, element_type, parameters_to_update)
 
         t.Commit()
-        print(f"Update process completed for element {element_id} and/or type {type_id}")
+        print(f"Update process completed for {len(elements)} elements and {len(element_types)} element types")
     except Exception as e:
         t.RollBack()
-        print(f"Error updating element/type: {str(e)}")
+        print(f"Error updating elements/types: {str(e)}")
+
+def update_element_parameters(doc, element, parameters_to_update):
+    for param_name, param_value in parameters_to_update.items():
+        param = element.LookupParameter(param_name)
+        if param and not param.IsReadOnly:
+            if update_parameter(doc, param, param_value):
+                print(f"Updated parameter '{param_name}' for element/type {element.Id}")
+            else:
+                print(f"Failed to update parameter '{param_name}' for element/type {element.Id}")
+        else:
+            print(f"Parameter '{param_name}' not found or is read-only for element/type {element.Id}")
 
 
 
@@ -925,7 +926,7 @@ RUN SCRIPT
 """
 
 
-user_input = "Change standard window with mark 19 to have a width of 2 feet"
+user_input = "Change pocket doors to have a width of 4 feet and a height of 8 feet"
 
 
 # Example usage

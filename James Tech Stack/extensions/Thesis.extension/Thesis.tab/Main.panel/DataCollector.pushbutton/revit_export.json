@@ -28353,8 +28353,8 @@
         "Export to IFC": "0",
         "IfcGUID": "1hb7CWkynF4vPDja0y_oEs",
         "Design Option": "-1",
-        "Volume": "4.231558994505078",
-        "Area": "8.065900530565564",
+        "Volume": "8.703617191508759",
+        "Area": "14.283237265962505",
         "Phase Demolished": "-1",
         "Phase Created": "86961",
         "Comments": "N/A",
@@ -28396,7 +28396,7 @@
         "Type Name": "W600XD600",
         "Type Mark": "N/A",
         "Cost": "N/A",
-        "Width": "1.968503937007874",
+        "Width": "4.0",
         "Depth": "1.968503937007874",
         "Main Unit": "727812"
       }
@@ -28413,8 +28413,8 @@
         "Export to IFC": "0",
         "IfcGUID": "2PbrheIID1GfgGRPO3yaMM",
         "Design Option": "-1",
-        "Volume": "4.231558994505078",
-        "Area": "8.065900530565564",
+        "Volume": "8.703617191508759",
+        "Area": "14.283237265962505",
         "Phase Demolished": "-1",
         "Phase Created": "86961",
         "Comments": "N/A",
@@ -28456,7 +28456,7 @@
         "Type Name": "W600XD600 2",
         "Type Mark": "N/A",
         "Cost": "N/A",
-        "Width": "1.968503937007874",
+        "Width": "4.0",
         "Depth": "1.968503937007874",
         "Main Unit": "805576"
       }
@@ -28473,8 +28473,8 @@
         "Export to IFC": "0",
         "IfcGUID": "2PbrheIID1GfgGRPO3yxeK",
         "Design Option": "-1",
-        "Volume": "4.231558994505078",
-        "Area": "8.065900530565564",
+        "Volume": "8.703617191508759",
+        "Area": "14.283237265962505",
         "Phase Demolished": "-1",
         "Phase Created": "86961",
         "Comments": "N/A",
@@ -28516,7 +28516,7 @@
         "Type Name": "W600XD600",
         "Type Mark": "N/A",
         "Cost": "N/A",
-        "Width": "1.968503937007874",
+        "Width": "4.0",
         "Depth": "1.968503937007874",
         "Main Unit": "727812"
       }
@@ -28533,8 +28533,8 @@
         "Export to IFC": "0",
         "IfcGUID": "2PbrheIID1GfgGRPO3yxeS",
         "Design Option": "-1",
-        "Volume": "4.231558994505078",
-        "Area": "8.065900530565564",
+        "Volume": "8.703617191508759",
+        "Area": "14.283237265962505",
         "Phase Demolished": "-1",
         "Phase Created": "86961",
         "Comments": "N/A",
@@ -28576,7 +28576,7 @@
         "Type Name": "W600XD600",
         "Type Mark": "N/A",
         "Cost": "N/A",
-        "Width": "1.968503937007874",
+        "Width": "4.0",
         "Depth": "1.968503937007874",
         "Main Unit": "727812"
       }
@@ -28593,8 +28593,8 @@
         "Export to IFC": "0",
         "IfcGUID": "2PbrheIID1GfgGRPO3yxga",
         "Design Option": "-1",
-        "Volume": "4.231558994505078",
-        "Area": "8.065900530565564",
+        "Volume": "8.703617191508759",
+        "Area": "14.283237265962505",
         "Phase Demolished": "-1",
         "Phase Created": "86961",
         "Comments": "N/A",
@@ -28636,7 +28636,7 @@
         "Type Name": "W600XD600",
         "Type Mark": "N/A",
         "Cost": "N/A",
-        "Width": "1.968503937007874",
+        "Width": "4.0",
         "Depth": "1.968503937007874",
         "Main Unit": "727812"
       }
@@ -28653,8 +28653,8 @@
         "Export to IFC": "0",
         "IfcGUID": "2PbrheIID1GfgGRPO3yxjg",
         "Design Option": "-1",
-        "Volume": "4.231558994505078",
-        "Area": "8.065900530565564",
+        "Volume": "8.703617191508759",
+        "Area": "14.283237265962505",
         "Phase Demolished": "-1",
         "Phase Created": "86961",
         "Comments": "N/A",
@@ -28696,7 +28696,7 @@
         "Type Name": "W600XD600 2",
         "Type Mark": "N/A",
         "Cost": "N/A",
-        "Width": "1.968503937007874",
+        "Width": "4.0",
         "Depth": "1.968503937007874",
         "Main Unit": "805576"
       }
@@ -28713,8 +28713,8 @@
         "Export to IFC": "0",
         "IfcGUID": "2PbrheIID1GfgGRPO3yxiy",
         "Design Option": "-1",
-        "Volume": "4.231558994505078",
-        "Area": "8.065900530565564",
+        "Volume": "8.703617191508759",
+        "Area": "14.283237265962505",
         "Phase Demolished": "-1",
         "Phase Created": "86961",
         "Comments": "N/A",
@@ -28756,7 +28756,7 @@
         "Type Name": "W600XD600",
         "Type Mark": "N/A",
         "Cost": "N/A",
-        "Width": "1.968503937007874",
+        "Width": "4.0",
         "Depth": "1.968503937007874",
         "Main Unit": "727812"
       }
@@ -34089,7 +34089,7 @@
         "Type Name": "W600XD600",
         "Type Mark": "N/A",
         "Cost": "N/A",
-        "Width": "1.968503937007874",
+        "Width": "4.0",
         "Depth": "1.968503937007874",
         "Main Unit": "727812"
       }
@@ -34123,7 +34123,7 @@
         "Type Name": "W600XD600 2",
         "Type Mark": "N/A",
         "Cost": "N/A",
-        "Width": "1.968503937007874",
+        "Width": "4.0",
         "Depth": "1.968503937007874",
         "Main Unit": "805576"
       }
