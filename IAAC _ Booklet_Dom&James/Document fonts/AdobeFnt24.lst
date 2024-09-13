@@ -1,0 +1,126 @@
+%!Adobe-FontList 1.24
+%Locale:0x409
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Type1
+FontName:BentonSans-Bold
+FamilyName:BentonSans Bold
+StyleName:Regular
+FullName:BentonSans Bold
+MenuName:BentonSans Bold
+StyleBits:0
+WritingScript:Roman
+OutlineFileName:C:\Users\dxl33\OneDrive - Acuity Brands, Inc\Desktop\Dom_James_Thesis\IAAC _ Booklet_Dom&James\Document fonts\BentonSans Bold.otf
+DataFormat:sfntData
+UsesStandardEncoding:yes
+isCFF:yes
+hasSVG:no
+hasCOLR:no
+VariableFontType:NonVariableFont
+FileLength:25432
+FileModTime:1446240638
+WeightClass:400
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,4,BentonSans Bold
+NameArray:0,Win,1,BentonSans Bold
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:DMSans-Bold
+FamilyName:DM Sans
+StyleName:Bold
+FullName:DM Sans Bold
+MenuName:DM Sans
+StyleBits:2
+WritingScript:Roman
+OutlineFileName:C:\Users\dxl33\OneDrive - Acuity Brands, Inc\Desktop\Dom_James_Thesis\IAAC _ Booklet_Dom&James\Document fonts\DMSans-Bold.ttf
+DataFormat:sfntData
+hasSVG:no
+hasCOLR:no
+VariableFontType:NonVariableFont
+FileLength:71764
+FileModTime:1560214800
+WeightClass:700
+WidthClass:5
+AngleClass:0
+NameArray:0,Win,1,DM Sans
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:DMSans-Regular
+FamilyName:DM Sans
+StyleName:Regular
+FullName:DM Sans Regular
+MenuName:DM Sans
+StyleBits:0
+WritingScript:Roman
+OutlineFileName:C:\Users\dxl33\OneDrive - Acuity Brands, Inc\Desktop\Dom_James_Thesis\IAAC _ Booklet_Dom&James\Document fonts\DMSans-Regular.ttf
+DataFormat:sfntData
+hasSVG:no
+hasCOLR:no
+VariableFontType:NonVariableFont
+FileLength:71912
+FileModTime:1560214800
+WeightClass:400
+WidthClass:5
+AngleClass:0
+NameArray:0,Win,1,DM Sans
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:Type1
+FontName:MinionPro-Regular
+FamilyName:Minion Pro
+StyleName:Regular
+FullName:Minion Pro
+MenuName:Minion Pro
+StyleBits:0
+WritingScript:Roman
+OutlineFileName:C:\Users\dxl33\OneDrive - Acuity Brands, Inc\Desktop\Dom_James_Thesis\IAAC _ Booklet_Dom&James\Document fonts\MinionPro-Regular.otf
+DataFormat:sfntData
+UsesStandardEncoding:yes
+isCFF:yes
+hasSVG:no
+hasCOLR:no
+VariableFontType:NonVariableFont
+FileLength:217280
+FileModTime:1454482640
+WeightClass:400
+WidthClass:5
+AngleClass:0
+DesignSize:110
+NameArray:0,Mac,4,Minion Pro
+NameArray:0,Win,1,Minion Pro
+%EndFont
+
+%BeginFont
+Handler:DirectoryHandler
+FontType:TrueType
+FontName:Verdana
+FamilyName:Verdana
+StyleName:Regular
+FullName:Verdana
+MenuName:Verdana
+StyleBits:0
+WritingScript:Roman
+OutlineFileName:C:\Users\dxl33\OneDrive - Acuity Brands, Inc\Desktop\Dom_James_Thesis\IAAC _ Booklet_Dom&James\Document fonts\Verdana.ttf
+DataFormat:sfntData
+hasSVG:no
+hasCOLR:no
+VariableFontType:NonVariableFont
+FileLength:189144
+FileModTime:1454482642
+WeightClass:400
+WidthClass:5
+AngleClass:0
+NameArray:0,Mac,4,Verdana
+NameArray:0,Win,1,Verdana
+%EndFont
+
