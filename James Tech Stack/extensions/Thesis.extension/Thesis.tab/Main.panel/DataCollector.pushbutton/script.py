@@ -926,7 +926,7 @@ RUN SCRIPT
 """
 
 
-user_input = "Change skylight width to 4ft and height to 2ft"
+user_input = "Change all ottomans width to be 4 feet"
 
 
 # Example usage
