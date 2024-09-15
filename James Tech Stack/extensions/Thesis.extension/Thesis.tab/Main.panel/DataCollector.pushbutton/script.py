@@ -22,9 +22,14 @@ import numpy as np
 import requests
 from sklearn.metrics.pairwise import cosine_similarity
 import re
-
-
-
+from word2number import w2n
+import nltk
+from nltk import word_tokenize, pos_tag, sent_tokenize
+import json
+import base64
+import speech_recognition as sr
+from pydub import AudioSegment
+import io
 
 
 
@@ -40,7 +45,62 @@ app = __revit__.Application
 
 
 
+"""
+VOICE INPUT
+------------------------------------------------------------------------------------
+"""
 
+class Recorder:
+    def __init__(self, silence_timeout=15):
+        self.recognizer = sr.Recognizer()
+        self.silence_timeout = silence_timeout  # Time to wait for silence before stopping
+
+    def record_audio(self):
+        with sr.Microphone() as source:
+            print("Adjusting for ambient noise, please wait...")
+            self.recognizer.adjust_for_ambient_noise(source)
+            print("Recording... Speak now.")
+            
+            # Record audio until silence is detected
+            audio_data = self.recognizer.listen(source, timeout=self.silence_timeout, phrase_time_limit=self.silence_timeout)
+            print("Recording stopped.")
+            
+            return audio_data
+        
+
+class Transcriber:
+    def __init__(self):
+        self.recognizer = sr.Recognizer()
+    
+    def transcribe_audio(self, audio_data):
+        try:
+            print("Transcribing...")
+            prompt = self.recognizer.recognize_google(audio_data)
+            print("You said: " + prompt)
+            return prompt
+        except sr.UnknownValueError:
+            print("Google Speech Recognition could not understand the audio")
+            return ""
+        except sr.RequestError as e:
+            print(f"Could not request results from Google Speech Recognition service; {e}")
+            return ""
+        
+def voice_input():
+    # Create a Recorder instance with a silence timeout (e.g., 5 seconds)
+    recorder = Recorder(silence_timeout=15)
+    transcriber = Transcriber()
+
+    audio_data = recorder.record_audio()
+    prompt = transcriber.transcribe_audio(audio_data)
+    
+    # Check if prompt is empty
+    if not prompt:
+        print("No transcription available.")
+    else:
+        print(f"Transcribed Prompt: {prompt}")
+
+    # 'prompt' is now defined and can be used in further processing
+    return prompt
 
 
 """
@@ -926,7 +986,7 @@ RUN SCRIPT
 """
 
 
-user_input = "Change all ottomans width to be 4 feet"
+user_input = voice_input()
 
 
 # Example usage
